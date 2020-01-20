@@ -19,12 +19,6 @@ const SceneSchema = {
   properties: {selected: 'bool', id: 'int', title: 'string'},
 };
 
-const SelectedListSchema = {
-  name: 'Selected',
-  primaryKey: 'id',
-  properties: {selected: 'string', id: 'int'},
-};
-
 export default class SignInScreen extends React.Component {
   constructor(props) {
     super(props);
@@ -36,18 +30,6 @@ export default class SignInScreen extends React.Component {
 
   componentDidMount() {
     const {realm} = this.state;
-    if (realm.objects('Selected') == null) {
-      Realm.open({schema: [SelectedListSchema]}).then(() => {
-        realm.write(() => {
-          realm.create(
-            'Selected',
-            {selected: JSON.stringify([1, 2, 3, 4, 5]), id: 1},
-            'modified',
-          );
-          this.setState({realm});
-        });
-      });
-    }
     Realm.open({schema: [SceneSchema]}).then(() => {
       realm.write(() => {
         realm.create(

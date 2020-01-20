@@ -16,6 +16,8 @@ import {cloneDeep} from 'lodash';
 
 const Realm = require('realm');
 
+var _ = require('lodash');
+
 LocaleConfig.locales.en = LocaleConfig.locales[''];
 LocaleConfig.locales.ru = {
   monthNames: [
@@ -86,6 +88,7 @@ export default class AgendaView extends Component {
       selectedText: '',
       selectedScene: '',
       realm: new Realm(),
+      eventTest: {},
     };
     this.searchButton = this.searchButton.bind(this);
     this.reset = this.reset.bind(this);
@@ -110,8 +113,8 @@ export default class AgendaView extends Component {
           <Button
             onPress={() => navigation.navigate('Scenes')}
             icon={{
-              name: 'tasks',
-              type: 'font-awesome',
+              name: 'tasklist',
+              type: 'octicon',
               size: 25,
               color: '#000',
             }}
@@ -119,7 +122,7 @@ export default class AgendaView extends Component {
           />
         </View>
       ),
-      /*  headerLeft: () => (
+      headerLeft: () => (
         <View style={{flexDirection: 'row'}}>
           <Button
             onPress={() => navigation.navigate('Settings')}
@@ -132,11 +135,11 @@ export default class AgendaView extends Component {
             buttonStyle={{backgroundColor: '#fff'}}
           />
         </View>
-      ),*/
+      ),
     };
   };
 
-  componentDidMount() {
+  /*componentDidMount() {
     this.props.navigation.setParams({
       reset: this.reset.bind(this),
     });
@@ -171,6 +174,65 @@ export default class AgendaView extends Component {
     });
     // eslint-disable-next-line react/no-did-mount-set-state
     this.setState({evs: cloneDeep(jsonData)});
+  }*/
+
+  componentDidMount() {
+    this.props.navigation.setParams({
+      reset: this.reset.bind(this),
+    });
+    var arr2 = [1, 2, 3, 4, 5];
+    this.props.navigation.addListener('didFocus', payload => {
+      const {realm} = this.state;
+      if (realm.objects('Selected')[0].selected !== null) {
+        var e = realm
+          .objects('Selected')[0]
+          .selected.match(/\d+/g)
+          .map(Number);
+      } else {
+        var e = [1, 2, 3, 4, 5];
+      }
+      if (e === []) {
+        arr2 = [1, 2, 3, 4, 5];
+      } else {
+        arr2 = e;
+      }
+      /*var arr = cloneDeep(this.state.items);
+      const keys = Object.keys(arr);
+      for (let i = 0; i <= keys.length - 1; i++) {
+        for (let j = 0; j <= arr[keys[i]].length - 1; j++) {
+          const lol = Object.values(arr[keys[i]]);
+          if (arr2.includes(lol[j].scene)) {
+          } else {
+            arr[keys[i]][j] = '';
+          }
+        }
+      }
+      this.setState({evs: arr});*/
+      var arr = {};
+      var dates = [];
+      for (let i = 0; i < realm.objects('Event').length; i++) {
+        dates.push(realm.objects('Event')[i].date);
+        var arr3 = _.uniq(dates);
+      }
+      for (let j = 0; j < arr3.length; j++) {
+        var test1 = [];
+        for (
+          let x = 0;
+          x <
+          realm.objects('Event').filtered('date CONTAINS[c] $0', arr3[j])
+            .length;
+          x++
+        ) {
+          test1.push(
+            realm.objects('Event').filtered('date CONTAINS[c] $0', arr3[j])[x],
+          );
+        }
+        arr[arr3[j]] = test1;
+      }
+      this.setState({eventTest: arr});
+    });
+    // eslint-disable-next-line react/no-did-mount-set-state
+    //this.setState({evs: cloneDeep(jsonData)});
   }
 
   searchButton() {
@@ -190,7 +252,7 @@ export default class AgendaView extends Component {
           ref={agenda => {
             this.agenda = agenda;
           }}
-          items={xd}
+          items={this.state.eventTest}
           selected={this.state.selectedDate}
           renderItem={this.renderItem.bind(this)}
           renderEmptyDate={this.renderEmptyDate.bind(this)}
@@ -294,17 +356,12 @@ export default class AgendaView extends Component {
           <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <View>
               <Text style={styles.time}>{item.time}</Text>
-              <Text style={styles.title}>{item.text}</Text>
-              <Text style={styles.scene}>{sceneName}</Text>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text
+                style={{fontSize: 12, color: this.state.scenesColor[sceneID]}}>
+                {sceneName}
+              </Text>
             </View>
-            <View
-              style={{
-                backgroundColor: this.state.scenesColor[sceneID],
-                width: 15,
-                height: 15,
-                borderRadius: 10,
-              }}
-            />
           </View>
         </View>
       </TouchableOpacity>
@@ -363,10 +420,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-  },
-  scene: {
-    fontSize: 12,
-    color: '#7f7f7f',
   },
   back: {
     width: '100%',
