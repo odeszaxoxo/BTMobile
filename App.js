@@ -11,6 +11,8 @@ import jsonData from './src/data/data1.json';
 
 const Realm = require('realm');
 
+var _ = require('lodash');
+
 const AppStack = createStackNavigator({
   Agenda: AgendaScreen,
   Scenes: Scenes,
@@ -32,8 +34,15 @@ const AuthStack = createStackNavigator(
 );
 
 const EventSchema = {
-  name: 'Event',
-  properties: {title: 'string', scene: 'int', time: 'string', date: 'string'},
+  name: 'EventItem',
+  properties: {
+    title: 'string',
+    scene: 'int',
+    time: 'string',
+    date: 'string',
+    id: 'int',
+  },
+  primaryKey: 'id',
 };
 
 const SelectedListSchema = {
@@ -75,23 +84,23 @@ export default class App extends Component {
 
   componentDidMount() {
     const {realm} = this.state;
-    if (realm.objects('Selected') == null) {
-      Realm.open({schema: [SelectedListSchema]}).then(() => {
-        realm.write(() => {
+    Realm.open({schema: [SelectedListSchema]}).then(() => {
+      realm.write(() => {
+        if (_.isEmpty(realm.objects('Selected'))) {
           realm.create(
             'Selected',
             {selected: JSON.stringify([1, 2, 3, 4, 5]), id: 1},
             'modified',
           );
           this.setState({realm});
-        });
+        }
       });
-    }
+    });
     Realm.open({schema: [EventSchema]}).then(() => {
-      if (realm.objects('Event') == null) {
-        for (var i = 0; i < Object.keys(this.state.data.events).length; i++) {
-          realm.write(() => {
-            realm.create('Event', {
+      if (realm.objects('EventItem') == null) {
+        realm.write(() => {
+          for (var i = 0; i < Object.keys(this.state.data.events).length; i++) {
+            realm.create('EventItem', {
               title: this.state.data.events[
                 Object.keys(this.state.data.events)[i]
               ].text,
@@ -104,29 +113,40 @@ export default class App extends Component {
               time: this.state.data.events[
                 Object.keys(this.state.data.events)[i]
               ].time,
+              id: i,
             });
-            this.setState({realm});
-          });
-        }
-      } else {
-        realm.write(() => {
-          for (var k = 0; k < Object.keys(this.state.data.events).length; k++) {
-            realm.objects('Event')[k].title = this.state.data.events[
-              Object.keys(this.state.data.events)[k]
-            ].text;
-            realm.objects('Event')[k].date = this.state.data.events[
-              Object.keys(this.state.data.events)[k]
-            ].date;
-            realm.objects('Event')[k].scene = this.state.data.events[
-              Object.keys(this.state.data.events)[k]
-            ].scene;
-            realm.objects('Event')[k].time = this.state.data.events[
-              Object.keys(this.state.data.events)[k]
-            ].time;
           }
           this.setState({realm});
         });
-        console.log('exists', realm.objects('Event'));
+      } else {
+        realm.write(() => {
+          let allEvents = realm.objects('EventItem');
+          realm.delete(allEvents);
+        });
+        realm.write(() => {
+          for (var i = 0; i < Object.keys(this.state.data.events).length; i++) {
+            realm.create(
+              'EventItem',
+              {
+                title: this.state.data.events[
+                  Object.keys(this.state.data.events)[i]
+                ].text,
+                date: this.state.data.events[
+                  Object.keys(this.state.data.events)[i]
+                ].date,
+                scene: this.state.data.events[
+                  Object.keys(this.state.data.events)[i]
+                ].scene,
+                time: this.state.data.events[
+                  Object.keys(this.state.data.events)[i]
+                ].time,
+                id: i,
+              },
+              true,
+            );
+          }
+          this.setState({realm});
+        });
       }
     });
   }

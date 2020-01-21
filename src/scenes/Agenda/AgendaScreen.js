@@ -89,6 +89,8 @@ export default class AgendaView extends Component {
       selectedScene: '',
       realm: new Realm(),
       eventTest: {},
+      update: 1,
+      refresh: false,
     };
     this.searchButton = this.searchButton.bind(this);
     this.reset = this.reset.bind(this);
@@ -181,7 +183,7 @@ export default class AgendaView extends Component {
       reset: this.reset.bind(this),
     });
     var arr2 = [1, 2, 3, 4, 5];
-    this.props.navigation.addListener('didFocus', payload => {
+    this.props.navigation.addListener('didFocus', () => {
       const {realm} = this.state;
       if (realm.objects('Selected')[0].selected !== null) {
         var e = realm
@@ -196,22 +198,10 @@ export default class AgendaView extends Component {
       } else {
         arr2 = e;
       }
-      /*var arr = cloneDeep(this.state.items);
-      const keys = Object.keys(arr);
-      for (let i = 0; i <= keys.length - 1; i++) {
-        for (let j = 0; j <= arr[keys[i]].length - 1; j++) {
-          const lol = Object.values(arr[keys[i]]);
-          if (arr2.includes(lol[j].scene)) {
-          } else {
-            arr[keys[i]][j] = '';
-          }
-        }
-      }
-      this.setState({evs: arr});*/
       var arr = {};
       var dates = [];
-      for (let i = 0; i < realm.objects('Event').length; i++) {
-        dates.push(realm.objects('Event')[i].date);
+      for (let i = 0; i < realm.objects('EventItem').length; i++) {
+        dates.push(realm.objects('EventItem')[i].date);
         var arr3 = _.uniq(dates);
       }
       for (let j = 0; j < arr3.length; j++) {
@@ -219,15 +209,28 @@ export default class AgendaView extends Component {
         for (
           let x = 0;
           x <
-          realm.objects('Event').filtered('date CONTAINS[c] $0', arr3[j])
+          realm.objects('EventItem').filtered('date CONTAINS[c] $0', arr3[j])
             .length;
           x++
         ) {
-          test1.push(
-            realm.objects('Event').filtered('date CONTAINS[c] $0', arr3[j])[x],
-          );
+          if (
+            arr2.includes(
+              realm
+                .objects('EventItem')
+                .filtered('date CONTAINS[c] $0', arr3[j])[x].scene,
+            )
+          ) {
+            test1.push(
+              realm
+                .objects('EventItem')
+                .filtered('date CONTAINS[c] $0', arr3[j])[x],
+            );
+          }
         }
-        arr[arr3[j]] = test1;
+        if (_.isEmpty(test1)) {
+        } else {
+          arr[arr3[j]] = test1;
+        }
       }
       this.setState({eventTest: arr});
     });
@@ -240,11 +243,6 @@ export default class AgendaView extends Component {
   }
 
   render() {
-    if (this.state.evs === {} || this.state.evs === undefined) {
-      var xd = this.state.items;
-    } else {
-      xd = this.state.evs;
-    }
     LocaleConfig.defaultLocale = 'ru';
     return (
       <View style={[styles.back]}>
@@ -349,7 +347,7 @@ export default class AgendaView extends Component {
           this.setState({
             selectedTime: item.time,
             selectedScene: sceneName,
-            selectedText: item.text,
+            selectedText: item.title,
           });
         }}>
         <View style={[styles.item, {height: item.height}]}>
@@ -381,7 +379,7 @@ export default class AgendaView extends Component {
   };
 
   rowHasChanged(r1, r2) {
-    return r1.name !== r2.name;
+    return r1 !== r2;
   }
 
   timeToString(time) {
