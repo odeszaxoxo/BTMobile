@@ -12,7 +12,6 @@ import {
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Button} from 'react-native-elements';
 import jsonData from '../../data/data.json';
-import {cloneDeep} from 'lodash';
 
 const Realm = require('realm');
 
@@ -141,43 +140,6 @@ export default class AgendaView extends Component {
     };
   };
 
-  /*componentDidMount() {
-    this.props.navigation.setParams({
-      reset: this.reset.bind(this),
-    });
-    var arr2 = [1, 2, 3, 4, 5];
-    this.props.navigation.addListener('didFocus', payload => {
-      const {realm} = this.state;
-      if (realm.objects('Selected')[0].selected !== null) {
-        var e = realm
-          .objects('Selected')[0]
-          .selected.match(/\d+/g)
-          .map(Number);
-      } else {
-        var e = [1, 2, 3, 4, 5];
-      }
-      if (e === []) {
-        arr2 = [1, 2, 3, 4, 5];
-      } else {
-        arr2 = e;
-      }
-      var arr = cloneDeep(this.state.items);
-      const keys = Object.keys(arr);
-      for (let i = 0; i <= keys.length - 1; i++) {
-        for (let j = 0; j <= arr[keys[i]].length - 1; j++) {
-          const lol = Object.values(arr[keys[i]]);
-          if (arr2.includes(lol[j].scene)) {
-          } else {
-            arr[keys[i]][j] = '';
-          }
-        }
-      }
-      this.setState({evs: arr});
-    });
-    // eslint-disable-next-line react/no-did-mount-set-state
-    this.setState({evs: cloneDeep(jsonData)});
-  }*/
-
   componentDidMount() {
     this.props.navigation.setParams({
       reset: this.reset.bind(this),
@@ -204,6 +166,8 @@ export default class AgendaView extends Component {
         dates.push(realm.objects('EventItem')[i].date);
         var arr3 = _.uniq(dates);
       }
+      let itemsEv = realm.objects('EventItem').sorted('time');
+      console.log(itemsEv);
       for (let j = 0; j < arr3.length; j++) {
         var test1 = [];
         for (
@@ -220,11 +184,11 @@ export default class AgendaView extends Component {
                 .filtered('date CONTAINS[c] $0', arr3[j])[x].scene,
             )
           ) {
-            test1.push(
-              realm
-                .objects('EventItem')
-                .filtered('date CONTAINS[c] $0', arr3[j])[x],
-            );
+            let container = realm
+              .objects('EventItem')
+              .sorted('time')
+              .filtered('date CONTAINS[c] $0', arr3[j])[x];
+            test1.push(container);
           }
         }
         if (_.isEmpty(test1)) {
@@ -234,8 +198,6 @@ export default class AgendaView extends Component {
       }
       this.setState({eventTest: arr});
     });
-    // eslint-disable-next-line react/no-did-mount-set-state
-    //this.setState({evs: cloneDeep(jsonData)});
   }
 
   searchButton() {
