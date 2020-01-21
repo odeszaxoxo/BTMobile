@@ -223,11 +223,15 @@ PODS:
   - RealmJS (4.0.0-beta.0):
     - GCDWebServer
     - React
+  - RNCPushNotificationIOS (1.0.5):
+    - React
   - RNDateTimePicker (2.1.0):
     - React
   - RNGestureHandler (1.5.2):
     - React
   - RNI18n (2.0.15):
+    - React
+  - RNSettingsPage (1.0.0):
     - React
   - RNVectorIcons (6.6.0):
     - React
@@ -262,9 +266,11 @@ DEPENDENCIES:
   - ReactCommon/jscallinvoker (from `../node_modules/react-native/ReactCommon`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - RealmJS (from `../node_modules/realm`)
+  - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNI18n (from `../node_modules/react-native-i18n`)
+  - RNSettingsPage (from `../node_modules/react-native-settings-page/ios`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -324,12 +330,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RealmJS:
     :path: "../node_modules/realm"
+  RNCPushNotificationIOS:
+    :path: "../node_modules/@react-native-community/push-notification-ios"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNI18n:
     :path: "../node_modules/react-native-i18n"
+  RNSettingsPage:
+    :path: "../node_modules/react-native-settings-page/ios"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   Yoga:
@@ -363,9 +373,11 @@ SPEC CHECKSUMS:
   React-RCTVibration: a49a1f42bf8f5acf1c3e297097517c6b3af377ad
   ReactCommon: 198c7c8d3591f975e5431bec1b0b3b581aa1c5dd
   RealmJS: 4ffcbfc2e7ccb9ee669be840df9e30a64bbb38bb
+  RNCPushNotificationIOS: 30ed75aa2981a4ee00b8a2c46599ff18a9c7fcf6
   RNDateTimePicker: 68e542a59ff1b73563744145bfc45c2b88a3deea
   RNGestureHandler: 946a7691e41df61e2c4b1884deab41a4cdc3afff
   RNI18n: e2f7e76389fcc6e84f2c8733ea89b92502351fd8
+  RNSettingsPage: 8c103cbcc01488cd0cd65d9128b5be5f517f0174
   RNVectorIcons: 0bb4def82230be1333ddaeee9fcba45f0b288ed4
   Yoga: f2a7cd4280bfe2cca5a7aed98ba0eb3d1310f18b
 

@@ -12,6 +12,9 @@ import {
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Button} from 'react-native-elements';
 import jsonData from '../../data/data.json';
+import NotificationService from '../../services/NotificationService';
+import appConfig from '../../../app.json';
+import PushNotification from 'react-native-push-notification';
 
 const Realm = require('realm');
 
@@ -90,10 +93,15 @@ export default class AgendaView extends Component {
       eventTest: {},
       update: 1,
       refresh: false,
+      senderId: appConfig.senderID,
     };
     this.searchButton = this.searchButton.bind(this);
     this.reset = this.reset.bind(this);
     this.setModalVisible = this.setModalVisible.bind(this);
+    this.notif = new NotificationService(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
   }
   static navigationOptions = ({navigation}) => {
     const reset = navigation.getParam('reset', () => {});
@@ -146,6 +154,7 @@ export default class AgendaView extends Component {
     });
     var arr2 = [1, 2, 3, 4, 5];
     this.props.navigation.addListener('didFocus', () => {
+      this.notif.localNotif();
       const {realm} = this.state;
       if (realm.objects('Selected')[0].selected !== null) {
         var e = realm
@@ -166,8 +175,6 @@ export default class AgendaView extends Component {
         dates.push(realm.objects('EventItem')[i].date);
         var arr3 = _.uniq(dates);
       }
-      let itemsEv = realm.objects('EventItem').sorted('time');
-      console.log(itemsEv);
       for (let j = 0; j < arr3.length; j++) {
         var test1 = [];
         for (
@@ -186,14 +193,13 @@ export default class AgendaView extends Component {
           ) {
             let container = realm
               .objects('EventItem')
-              .sorted('time')
               .filtered('date CONTAINS[c] $0', arr3[j])[x];
             test1.push(container);
           }
         }
         if (_.isEmpty(test1)) {
         } else {
-          arr[arr3[j]] = test1;
+          arr[arr3[j]] = _.orderBy(test1, 'time', 'asc');
         }
       }
       this.setState({eventTest: arr});
@@ -202,6 +208,17 @@ export default class AgendaView extends Component {
 
   searchButton() {
     console.log('push');
+  }
+
+  onRegister(token) {
+    Alert.alert('Registered !', JSON.stringify(token));
+    console.log(token);
+    this.setState({registerToken: token.token, gcmRegistered: true});
+  }
+
+  onNotif(notif) {
+    console.log(notif);
+    Alert.alert(notif.title, notif.message);
   }
 
   render() {
@@ -293,6 +310,7 @@ export default class AgendaView extends Component {
   reset = () => {
     const today = new Date();
     this.agenda.chooseDay(today);
+    this.notif.scheduleNotif(new Date(Date.now() + 5 * 1000));
   };
 
   setModalVisible(visible) {
