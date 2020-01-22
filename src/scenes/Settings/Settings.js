@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, AsyncStorage} from 'react-native';
 import ReactNativeSettingsPage, {
   SectionRow,
   NavigateRow,
@@ -8,6 +8,7 @@ import ReactNativeSettingsPage, {
   SwitchRow,
   SliderRow,
 } from 'react-native-settings-page';
+import {Button} from 'react-native-elements';
 
 export default class SettingsScreen extends React.Component {
   state = {
@@ -22,6 +23,12 @@ export default class SettingsScreen extends React.Component {
   _navigateToScreen = () => {
     const {navigation} = this.props;
     navigation.navigate('Your-Screen-Name');
+  };
+
+  _logout = () => {
+    const {navigation} = this.props;
+    navigation.navigate('SignIn');
+    AsyncStorage.removeItem('userToken');
   };
 
   render() {
@@ -51,6 +58,14 @@ export default class SettingsScreen extends React.Component {
             _onValueChange={value => {
               this.setState({value});
             }}
+          />
+          <Button
+            title="Выйти"
+            iconName="sign-out"
+            onPress={this._logout}
+            style={{marginTop: '5%'}}
+            buttonStyle={{backgroundColor: 'red'}}
+            titleStyle={{color: 'white', fontSize: 16, fontWeight: '700'}}
           />
         </SectionRow>
       </ReactNativeSettingsPage>

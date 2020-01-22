@@ -14,7 +14,6 @@ import {Button} from 'react-native-elements';
 import jsonData from '../../data/data.json';
 import NotificationService from '../../services/NotificationService';
 import appConfig from '../../../app.json';
-import PushNotification from 'react-native-push-notification';
 
 const Realm = require('realm');
 

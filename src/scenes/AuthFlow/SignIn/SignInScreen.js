@@ -22,7 +22,13 @@ const SceneSchema = {
 export default class SignInScreen extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {email: '', password: '', list: [], realm: new Realm()};
+    this.state = {
+      email: '',
+      password: '',
+      list: [],
+      realm: new Realm(),
+      correct: 'none',
+    };
   }
   static navigationOptions = {
     title: '',
@@ -73,6 +79,7 @@ export default class SignInScreen extends React.Component {
                 onChangeText={email => this.setState({email})}
                 value={this.state.email}
                 inputStyle={{color: '#fff', fontSize: 20}}
+                autoCapitalize="none"
                 leftIcon={
                   <Icon
                     name="user"
@@ -81,6 +88,7 @@ export default class SignInScreen extends React.Component {
                     type="font-awesome"
                   />
                 }
+                leftIconContainerStyle={{marginRight: 10}}
               />
             </View>
             <View style={styles.input}>
@@ -88,6 +96,7 @@ export default class SignInScreen extends React.Component {
                 onChangeText={password => this.setState({password})}
                 value={this.state.password}
                 inputStyle={{color: '#fff', fontSize: 20}}
+                secureTextEntry={true}
                 leftIcon={
                   <Icon
                     name="lock"
@@ -96,6 +105,7 @@ export default class SignInScreen extends React.Component {
                     type="font-awesome"
                   />
                 }
+                leftIconContainerStyle={{marginRight: 10}}
               />
             </View>
             <View style={styles.loginButtonContainer}>
@@ -104,6 +114,15 @@ export default class SignInScreen extends React.Component {
                 onPress={this._signInAsync}
                 buttonStyle={{backgroundColor: '#1E151A'}}
               />
+              <Text
+                style={{
+                  display: this.state.correct,
+                  color: 'red',
+                  fontSize: 16,
+                  alignSelf: 'center',
+                }}>
+                Неверный email/пароль.
+              </Text>
             </View>
           </View>
           <View style={styles.credentials}>
@@ -117,8 +136,12 @@ export default class SignInScreen extends React.Component {
   }
 
   _signInAsync = async () => {
-    await AsyncStorage.setItem('userToken', 'abc');
-    this.props.navigation.navigate('App');
+    if (this.state.email === 'admin' && this.state.password === 'admin') {
+      await AsyncStorage.setItem('userToken', 'abc');
+      this.props.navigation.navigate('App');
+    } else {
+      this.setState({correct: 'flex'});
+    }
   };
 }
 

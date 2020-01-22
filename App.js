@@ -8,6 +8,9 @@ import Scenes from './src/scenes/ScenesList/ScenesList';
 import AgendaScreen from './src/scenes/Agenda/AgendaScreen';
 import Settings from './src/scenes/Settings/Settings';
 import jsonData from './src/data/data1.json';
+import moment from 'moment';
+import NotificationService from './src/services/NotificationService';
+import appConfig from './app.json';
 
 const Realm = require('realm');
 
@@ -79,7 +82,19 @@ export default class App extends Component {
     this.state = {
       data: jsonData,
       realm: new Realm(),
+      senderId: appConfig.senderID,
+      scenes: {
+        1: 'Историческая сцена',
+        2: 'Новая сцена',
+        3: 'Бетховенский зал',
+        4: 'Верхняя сцена',
+        5: 'Балетный зал',
+      },
     };
+    this.notif = new NotificationService(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
   }
 
   componentDidMount() {
@@ -149,6 +164,30 @@ export default class App extends Component {
         });
       }
     });
+    for (var id = 0; id < realm.objects('EventItem').length; id++) {
+      let result = realm.objects('EventItem')[id].time;
+      let date = realm.objects('EventItem')[id].date;
+      let startTime = date + ' ' + result.substring(0, 5) + ':00';
+      let momentDate = moment(startTime);
+      let datee = new Date(momentDate.toDate());
+      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+      let message =
+        'Событие ' +
+        realm.objects('EventItem')[id].title +
+        ' начнется через 5 минут.';
+      this.notif.scheduleNotif(new Date(datee - 60 * 1000 * 5), title, message);
+    }
+  }
+
+  onRegister(token) {
+    console.log('Registered !', JSON.stringify(token));
+    console.log(token);
+    this.setState({registerToken: token.token, gcmRegistered: true});
+  }
+
+  onNotif(notif) {
+    console.log(notif);
+    console.log(notif.title, notif.message);
   }
 
   render() {
