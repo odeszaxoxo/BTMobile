@@ -105,10 +105,8 @@ export default class SettingsScreen extends React.Component {
           message,
         );
       }
-      console.log('added', this.notif);
     } else {
       this.notif.cancelAll();
-      console.log('deleted', this.notif);
     }
   };
   /*for (var id = 0; id < realm.objects('EventItem').length; id++) {
@@ -126,12 +124,34 @@ export default class SettingsScreen extends React.Component {
     } */
 
   onBigCheck = async () => {
+    const {realm} = this.state;
     await AsyncStorage.removeItem('bigCheck');
-    this.setState({bigCheck: !this.state.bigCheck});
+    this.setState({smallCheck: !this.state.smallCheck});
     await AsyncStorage.setItem(
       'bigCheck',
       JSON.stringify(this.state.smallCheck),
     );
+    if (this.state.smallCheck === true) {
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let result = realm.objects('EventItem')[id].time;
+        let date = realm.objects('EventItem')[id].date;
+        let startTime = date + ' ' + result.substring(0, 5) + ':00';
+        let momentDate = moment(startTime);
+        let datee = new Date(momentDate.toDate());
+        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+        let message =
+          'Событие ' +
+          realm.objects('EventItem')[id].title +
+          ' начнется через 5 минут.';
+        this.notif.scheduleNotif(
+          new Date(datee - 60 * 1000 * 60),
+          title,
+          message,
+        );
+      }
+    } else {
+      this.notif.cancelAll();
+    }
   };
 
   onRegister(token) {
