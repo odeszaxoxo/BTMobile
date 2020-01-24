@@ -220,14 +220,14 @@ PODS:
     - React-cxxreact (= 0.61.5)
     - React-jsi (= 0.61.5)
     - ReactCommon/jscallinvoker (= 0.61.5)
-  - RealmJS (4.0.0-beta.0):
+  - RealmJS (4.0.0-beta.1):
     - GCDWebServer
     - React
   - RNCPushNotificationIOS (1.0.5):
     - React
   - RNDateTimePicker (2.1.0):
     - React
-  - RNGestureHandler (1.5.2):
+  - RNGestureHandler (1.5.3):
     - React
   - RNI18n (2.0.15):
     - React
@@ -372,10 +372,10 @@ SPEC CHECKSUMS:
   React-RCTText: 9ccc88273e9a3aacff5094d2175a605efa854dbe
   React-RCTVibration: a49a1f42bf8f5acf1c3e297097517c6b3af377ad
   ReactCommon: 198c7c8d3591f975e5431bec1b0b3b581aa1c5dd
-  RealmJS: 4ffcbfc2e7ccb9ee669be840df9e30a64bbb38bb
+  RealmJS: a0d9e4ea107a1beedc2ead1737b6ead6d82705ea
   RNCPushNotificationIOS: 30ed75aa2981a4ee00b8a2c46599ff18a9c7fcf6
   RNDateTimePicker: 68e542a59ff1b73563744145bfc45c2b88a3deea
-  RNGestureHandler: 946a7691e41df61e2c4b1884deab41a4cdc3afff
+  RNGestureHandler: 02905abe54e1f6e59c081a10b4bd689721e17aa6
   RNI18n: e2f7e76389fcc6e84f2c8733ea89b92502351fd8
   RNSettingsPage: 8c103cbcc01488cd0cd65d9128b5be5f517f0174
   RNVectorIcons: 0bb4def82230be1333ddaeee9fcba45f0b288ed4

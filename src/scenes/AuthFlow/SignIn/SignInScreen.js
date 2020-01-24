@@ -136,8 +136,15 @@ export default class SignInScreen extends React.Component {
   }
 
   _signInAsync = async () => {
-    if (this.state.email === 'admin' && this.state.password === 'admin') {
+    if (
+      (this.state.email === 'admin' && this.state.password === 'admin') ||
+      (this.state.email === 'user' && this.state.password === 'user')
+    ) {
       await AsyncStorage.setItem('userToken', 'abc');
+      await AsyncStorage.setItem('user', this.state.email);
+      await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
+      await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
+      console.log(JSON.stringify(this.state.email));
       this.props.navigation.navigate('App');
     } else {
       this.setState({correct: 'flex'});

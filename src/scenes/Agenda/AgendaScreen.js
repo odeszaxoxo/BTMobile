@@ -309,7 +309,6 @@ export default class AgendaView extends Component {
   reset = () => {
     const today = new Date();
     this.agenda.chooseDay(today);
-    this.notif.scheduleNotif(new Date(Date.now() + 5 * 1000));
   };
 
   setModalVisible(visible) {
