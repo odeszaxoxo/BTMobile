@@ -144,7 +144,8 @@ export default class SignInScreen extends React.Component {
       await AsyncStorage.setItem('user', this.state.email);
       await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
       await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
-      console.log(JSON.stringify(this.state.email));
+      await AsyncStorage.setItem('bigTime', 'key0');
+      await AsyncStorage.setItem('smallTime', 'key0');
       this.props.navigation.navigate('App');
     } else {
       this.setState({correct: 'flex'});

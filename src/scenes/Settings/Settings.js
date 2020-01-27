@@ -8,8 +8,21 @@ import ReactNativeSettingsPage, {
 } from 'react-native-settings-page';
 import {Button, Avatar} from 'react-native-elements';
 import NotificationService from '../../services/NotificationService';
+import NotificationServiceLong from '../../services/NotificationServiceLong';
 import appConfig from '../../../app.json';
 import moment from 'moment';
+import {
+  Container,
+  Header,
+  Content,
+  Form,
+  Item,
+  Picker,
+  Icon,
+} from 'native-base';
+
+const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
+const bitItems = {key0: 1, key1: 2, key3: 3};
 
 const Realm = require('realm');
 
@@ -32,8 +45,14 @@ export default class SettingsScreen extends React.Component {
         4: 'Верхняя сцена',
         5: 'Балетный зал',
       },
+      selectedShort: undefined,
+      selectedLong: undefined,
     };
     this.notif = new NotificationService(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
+    this.notifLong = new NotificationServiceLong(
       this.onRegister.bind(this),
       this.onNotif.bind(this),
     );
@@ -42,9 +61,63 @@ export default class SettingsScreen extends React.Component {
     title: 'Настройки',
   };
 
-  componentDidMount() {
+  UNSAFE_componentWillMount() {
     this.getUserPrefs();
   }
+
+  onSmallValueChange = async value => {
+    const {realm} = this.state;
+    this.setState({
+      selectedShort: value,
+    });
+    await AsyncStorage.removeItem('smallTime');
+    await AsyncStorage.setItem('smallTime', value);
+    this.notif.cancelAll();
+    for (var id = 0; id < realm.objects('EventItem').length; id++) {
+      let result = realm.objects('EventItem')[id].time;
+      let date = realm.objects('EventItem')[id].date;
+      let startTime = date + ' ' + result.substring(0, 5) + ':00';
+      let momentDate = moment(startTime);
+      let datee = new Date(momentDate.toDate());
+      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+      let message =
+        'Событие ' +
+        realm.objects('EventItem')[id].title +
+        ' начнется через 5 минут.';
+      this.notif.scheduleNotif(
+        new Date(datee - 60 * 1000 * smallItems[value]),
+        title,
+        message,
+      );
+    }
+  };
+
+  onBigValueChange = async value => {
+    const {realm} = this.state;
+    this.setState({
+      selectedLong: value,
+    });
+    await AsyncStorage.removeItem('bigTime');
+    await AsyncStorage.setItem('bigTime', value);
+    this.notif.cancelAll();
+    for (var id = 0; id < realm.objects('EventItem').length; id++) {
+      let result = realm.objects('EventItem')[id].time;
+      let date = realm.objects('EventItem')[id].date;
+      let startTime = date + ' ' + result.substring(0, 5) + ':00';
+      let momentDate = moment(startTime);
+      let datee = new Date(momentDate.toDate());
+      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+      let message =
+        'Событие ' +
+        realm.objects('EventItem')[id].title +
+        ' начнется через 5 минут.';
+      this.notif.scheduleNotif(
+        new Date(datee - 60 * 1000 * smallItems[value]),
+        title,
+        message,
+      );
+    }
+  };
 
   getUserPrefs = async () => {
     try {
@@ -54,10 +127,15 @@ export default class SettingsScreen extends React.Component {
       this.setState({smallCheck: small});
       const big = JSON.parse(await AsyncStorage.getItem('bigCheck'));
       this.setState({bigCheck: big});
-      return [name, small, big];
+      const smallTime = await AsyncStorage.getItem('smallTime');
+      this.setState({selectedShort: smallTime});
+      const bigTime = await AsyncStorage.getItem('bigTime');
+      this.setState({selectedLong: bigTime});
+      return [name, small, big, smallTime, bigTime];
     } catch (error) {
       console.log(error.message);
     }
+    //this.setState({selectedShort: 'key0', selectedLong: 'key0'});
   };
 
   _navigateToScreen = () => {
@@ -76,7 +154,13 @@ export default class SettingsScreen extends React.Component {
     console.log('notification');
     let title = 'Тестовое уведомление';
     let message = 'Событие начнется через 30 секунд';
+    let messageLong = 'Событие начнется через час';
     this.notif.scheduleNotif(new Date(Date.now() + 30 * 1000), title, message);
+    this.notifLong.scheduleNotif(
+      new Date(Date.now() + 30 * 1000),
+      title,
+      messageLong,
+    );
   };
 
   onSmallCheck = async () => {
@@ -126,28 +210,25 @@ export default class SettingsScreen extends React.Component {
   onBigCheck = async () => {
     const {realm} = this.state;
     await AsyncStorage.removeItem('bigCheck');
-    this.setState({smallCheck: !this.state.smallCheck});
-    await AsyncStorage.setItem(
-      'bigCheck',
-      JSON.stringify(this.state.smallCheck),
-    );
-    if (this.state.smallCheck === true) {
+    this.setState({bigCheck: !this.state.bigCheck});
+    await AsyncStorage.setItem('bigCheck', JSON.stringify(this.state.bigCheck));
+    console.log(this.state.bigCheck);
+    if (this.state.bigCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
+        var test = moment.utc(datee).format();
+        var dateTime = moment.utc(test, 'YYYY-MM-DD HH:mm');
+        var local = new Date(dateTime.local().format('YYYY-MM-DDTHH:mm'));
         let title = this.state.scenes[realm.objects('EventItem')[id].scene];
         let message =
           'Событие ' +
           realm.objects('EventItem')[id].title +
           ' начнется через 5 минут.';
-        this.notif.scheduleNotif(
-          new Date(datee - 60 * 1000 * 60),
-          title,
-          message,
-        );
+        this.notif.scheduleNotif(new Date(local - 60 * 1000), title, message);
       }
     } else {
       this.notif.cancelAll();
@@ -227,11 +308,28 @@ export default class SettingsScreen extends React.Component {
             _value={this.state.smallCheck}
             _onValueChange={this.onSmallCheck}
           />
-          <NavigateRow
-            text="Время"
-            iconName="calendar"
-            onPressCallback={this._navigateToScreen}
-          />
+          <Item picker>
+            <Picker
+              mode="dialog"
+              iosIcon={
+                <Icon
+                  name="arrow-down"
+                  style={{color: '#000', position: 'absolute', right: 0}}
+                />
+              }
+              iosHeader="Выберите"
+              style={{minWidth: '97%', position: 'relative'}}
+              placeholder="Выберите время"
+              placeholderStyle={{color: '#bfc6ea'}}
+              placeholderIconColor="#007aff"
+              selectedValue={this.state.selectedShort}
+              onValueChange={this.onSmallValueChange.bind(this)}>
+              <Picker.Item label="5 минут" value="key0" />
+              <Picker.Item label="10 минут" value="key1" />
+              <Picker.Item label="15 минут" value="key2" />
+              <Picker.Item label="30 минут" value="key3" />
+            </Picker>
+          </Item>
         </SectionRow>
         <SectionRow text="Уведомления задолго">
           <SwitchRow
@@ -240,11 +338,26 @@ export default class SettingsScreen extends React.Component {
             _value={this.state.bigCheck}
             _onValueChange={this.onBigCheck}
           />
-          <NavigateRow
-            text="Время"
-            iconName="calendar"
-            onPressCallback={this._navigateToScreen}
-          />
+          <Item picker>
+            <Picker
+              mode="dropdown"
+              iosIcon={
+                <Icon
+                  name="arrow-down"
+                  style={{color: '#000', position: 'absolute', right: 0}}
+                />
+              }
+              style={{minWidth: '97%', position: 'relative'}}
+              placeholder="Выберите время"
+              placeholderStyle={{color: '#bfc6ea'}}
+              placeholderIconColor="#007aff"
+              selectedValue={this.state.selectedLong}
+              onValueChange={this.onBigValueChange.bind(this)}>
+              <Picker.Item label="1 час" value="key0" />
+              <Picker.Item label="2 часа" value="key1" />
+              <Picker.Item label="3 часа" value="key2" />
+            </Picker>
+          </Item>
         </SectionRow>
         <SectionRow text="Тест уведомлений">
           <Button

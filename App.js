@@ -10,6 +10,7 @@ import Settings from './src/scenes/Settings/Settings';
 import jsonData from './src/data/data1.json';
 import moment from 'moment';
 import NotificationService from './src/services/NotificationService';
+import NotificationServiceLong from './src/services/NotificationServiceLong';
 import appConfig from './app.json';
 
 const Realm = require('realm');
@@ -95,6 +96,10 @@ export default class App extends Component {
       this.onRegister.bind(this),
       this.onNotif.bind(this),
     );
+    this.notifLong = new NotificationServiceLong(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
   }
 
   componentDidMount() {
@@ -170,12 +175,25 @@ export default class App extends Component {
       let startTime = date + ' ' + result.substring(0, 5) + ':00';
       let momentDate = moment(startTime);
       let datee = new Date(momentDate.toDate());
+      var test = moment.utc(datee).format();
+      var dateTime = moment.utc(test, 'YYYY-MM-DD HH:mm');
+      var local = new Date(dateTime.local().format('YYYY-MM-DDTHH:mm'));
+      console.log(datee, local);
       let title = this.state.scenes[realm.objects('EventItem')[id].scene];
       let message =
         'Событие ' +
         realm.objects('EventItem')[id].title +
         ' начнется через 5 минут.';
+      let messageLong =
+        'Событие ' +
+        realm.objects('EventItem')[id].title +
+        ' начнется через 1 час.';
       this.notif.scheduleNotif(new Date(datee - 60 * 1000 * 5), title, message);
+      this.notifLong.scheduleNotif(
+        new Date(datee - 60 * 1000 * 60),
+        title,
+        messageLong,
+      );
     }
   }
 
