@@ -3,7 +3,6 @@ import React from 'react';
 import {View, StyleSheet, AsyncStorage, Text} from 'react-native';
 import ReactNativeSettingsPage, {
   SectionRow,
-  NavigateRow,
   SwitchRow,
 } from 'react-native-settings-page';
 import {Button, Avatar} from 'react-native-elements';
@@ -11,18 +10,10 @@ import NotificationService from '../../services/NotificationService';
 import NotificationServiceLong from '../../services/NotificationServiceLong';
 import appConfig from '../../../app.json';
 import moment from 'moment';
-import {
-  Container,
-  Header,
-  Content,
-  Form,
-  Item,
-  Picker,
-  Icon,
-} from 'native-base';
+import {Item, Picker, Icon} from 'native-base';
 
 const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
-const bitItems = {key0: 1, key1: 2, key3: 3};
+const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
 
 const Realm = require('realm');
 
@@ -72,23 +63,29 @@ export default class SettingsScreen extends React.Component {
     });
     await AsyncStorage.removeItem('smallTime');
     await AsyncStorage.setItem('smallTime', value);
-    this.notif.cancelAll();
-    for (var id = 0; id < realm.objects('EventItem').length; id++) {
-      let result = realm.objects('EventItem')[id].time;
-      let date = realm.objects('EventItem')[id].date;
-      let startTime = date + ' ' + result.substring(0, 5) + ':00';
-      let momentDate = moment(startTime);
-      let datee = new Date(momentDate.toDate());
-      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
-      let message =
-        'Событие ' +
-        realm.objects('EventItem')[id].title +
-        ' начнется через 5 минут.';
-      this.notif.scheduleNotif(
-        new Date(datee - 60 * 1000 * smallItems[value]),
-        title,
-        message,
-      );
+    console.log('asdasd');
+    if (this.state.smallCheck === true) {
+      console.log('asas');
+      this.notif.cancelAll();
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let result = realm.objects('EventItem')[id].time;
+        let date = realm.objects('EventItem')[id].date;
+        let startTime = date + ' ' + result.substring(0, 5) + ':00';
+        let momentDate = moment(startTime);
+        let datee = new Date(momentDate.toDate());
+        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+        let message =
+          'Событие ' +
+          realm.objects('EventItem')[id].title +
+          ' начнется через ' +
+          smallItems[value] +
+          ' минут.';
+        this.notif.scheduleNotif(
+          new Date(datee - 60 * 1000 * smallItems[value]),
+          title,
+          message,
+        );
+      }
     }
   };
 
@@ -99,23 +96,46 @@ export default class SettingsScreen extends React.Component {
     });
     await AsyncStorage.removeItem('bigTime');
     await AsyncStorage.setItem('bigTime', value);
-    this.notif.cancelAll();
-    for (var id = 0; id < realm.objects('EventItem').length; id++) {
-      let result = realm.objects('EventItem')[id].time;
-      let date = realm.objects('EventItem')[id].date;
-      let startTime = date + ' ' + result.substring(0, 5) + ':00';
-      let momentDate = moment(startTime);
-      let datee = new Date(momentDate.toDate());
-      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
-      let message =
-        'Событие ' +
-        realm.objects('EventItem')[id].title +
-        ' начнется через 5 минут.';
-      this.notif.scheduleNotif(
-        new Date(datee - 60 * 1000 * smallItems[value]),
-        title,
-        message,
-      );
+    if (this.state.bigCheck === true) {
+      this.notif.cancelAll();
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let result = realm.objects('EventItem')[id].time;
+        let date = realm.objects('EventItem')[id].date;
+        let startTime = date + ' ' + result.substring(0, 5) + ':00';
+        let momentDate = moment(startTime);
+        let datee = new Date(momentDate.toDate());
+        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+        if (bigItems[value] === 1) {
+          var message =
+            'Событие ' +
+            realm.objects('EventItem')[id].title +
+            ' начнется через ' +
+            bigItems[value] +
+            ' час.';
+        } else {
+          var arr = [2, 3, 4];
+          if (arr.includes(bigItems[value])) {
+            var message =
+              'Событие ' +
+              realm.objects('EventItem')[id].title +
+              ' начнется через ' +
+              bigItems[value] +
+              ' часа.';
+          } else {
+            var message =
+              'Событие ' +
+              realm.objects('EventItem')[id].title +
+              ' начнется через ' +
+              bigItems[value] +
+              ' часов.';
+          }
+        }
+        this.notif.scheduleNotif(
+          new Date(datee - 60 * 60 * 1000 * bigItems[value]),
+          title,
+          message,
+        );
+      }
     }
   };
 
@@ -135,7 +155,6 @@ export default class SettingsScreen extends React.Component {
     } catch (error) {
       console.log(error.message);
     }
-    //this.setState({selectedShort: 'key0', selectedLong: 'key0'});
   };
 
   _navigateToScreen = () => {
@@ -171,6 +190,7 @@ export default class SettingsScreen extends React.Component {
       'smallCheck',
       JSON.stringify(this.state.smallCheck),
     );
+    var value = await AsyncStorage.getItem('smallTime');
     if (this.state.smallCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let result = realm.objects('EventItem')[id].time;
@@ -178,41 +198,40 @@ export default class SettingsScreen extends React.Component {
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
+        let dateTest = new Date(
+          moment(datee)
+            .local()
+            .format('YYYY-MM-DDTHH:mm:ss'),
+        );
         let title = this.state.scenes[realm.objects('EventItem')[id].scene];
         let message =
           'Событие ' +
           realm.objects('EventItem')[id].title +
-          ' начнется через 5 минут.';
+          ' начнется через ' +
+          smallItems[value] +
+          ' минут.';
         this.notif.scheduleNotif(
-          new Date(datee - 60 * 1000 * 5),
+          new Date(datee - 60 * 1000 * smallItems[value]),
           title,
           message,
+        );
+        console.log(
+          'test small',
+          new Date(datee - 60 * 1000 * smallItems[value]),
+          new Date(dateTest - 60 * 1000 * smallItems[value]),
         );
       }
     } else {
       this.notif.cancelAll();
     }
   };
-  /*for (var id = 0; id < realm.objects('EventItem').length; id++) {
-      let result = realm.objects('EventItem')[id].time;
-      let date = realm.objects('EventItem')[id].date;
-      let startTime = date + ' ' + result.substring(0, 5) + ':00';
-      let momentDate = moment(startTime);
-      let datee = new Date(momentDate.toDate());
-      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
-      let message =
-        'Событие ' +
-        realm.objects('EventItem')[id].title +
-        ' начнется через 5 минут.';
-      this.notif.scheduleNotif(new Date(datee - 60 * 1000 * 5), title, message);
-    } */
 
   onBigCheck = async () => {
     const {realm} = this.state;
     await AsyncStorage.removeItem('bigCheck');
     this.setState({bigCheck: !this.state.bigCheck});
     await AsyncStorage.setItem('bigCheck', JSON.stringify(this.state.bigCheck));
-    console.log(this.state.bigCheck);
+    var value = await AsyncStorage.getItem('bigTime');
     if (this.state.bigCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let result = realm.objects('EventItem')[id].time;
@@ -220,15 +239,47 @@ export default class SettingsScreen extends React.Component {
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
-        var test = moment.utc(datee).format();
-        var dateTime = moment.utc(test, 'YYYY-MM-DD HH:mm');
-        var local = new Date(dateTime.local().format('YYYY-MM-DDTHH:mm'));
         let title = this.state.scenes[realm.objects('EventItem')[id].scene];
-        let message =
-          'Событие ' +
-          realm.objects('EventItem')[id].title +
-          ' начнется через 5 минут.';
-        this.notif.scheduleNotif(new Date(local - 60 * 1000), title, message);
+        let dateTest = new Date(
+          moment(datee)
+            .local()
+            .format('YYYY-MM-DDTHH:mm:ss'),
+        );
+        if (bigItems[value] === 1) {
+          var message =
+            'Событие ' +
+            realm.objects('EventItem')[id].title +
+            ' начнется через ' +
+            bigItems[value] +
+            ' час.';
+        } else {
+          var arr = [2, 3, 4];
+          if (arr.includes(bigItems[value])) {
+            var message =
+              'Событие ' +
+              realm.objects('EventItem')[id].title +
+              ' начнется через ' +
+              bigItems[value] +
+              ' часа.';
+          } else {
+            var message =
+              'Событие ' +
+              realm.objects('EventItem')[id].title +
+              ' начнется через ' +
+              bigItems[value] +
+              ' часов.';
+          }
+        }
+        this.notif.scheduleNotif(
+          new Date(datee - 60 * 60 * 1000 * bigItems[value]),
+          title,
+          message,
+        );
+        console.log(
+          'testBig',
+          new Date(datee - 60 * 60 * 1000 * bigItems[value]),
+          new Date(dateTest - 60 * 60 * 1000 * bigItems[value]),
+        );
       }
     } else {
       this.notif.cancelAll();
@@ -356,6 +407,7 @@ export default class SettingsScreen extends React.Component {
               <Picker.Item label="1 час" value="key0" />
               <Picker.Item label="2 часа" value="key1" />
               <Picker.Item label="3 часа" value="key2" />
+              <Picker.Item label="5 часов" value="key3" />
             </Picker>
           </Item>
         </SectionRow>
