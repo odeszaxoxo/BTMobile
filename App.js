@@ -175,10 +175,6 @@ export default class App extends Component {
       let startTime = date + ' ' + result.substring(0, 5) + ':00';
       let momentDate = moment(startTime);
       let datee = new Date(momentDate.toDate());
-      var test = moment.utc(datee).format();
-      var dateTime = moment.utc(test, 'YYYY-MM-DD HH:mm');
-      var local = new Date(dateTime.local().format('YYYY-MM-DDTHH:mm'));
-      console.log(datee, local);
       let title = this.state.scenes[realm.objects('EventItem')[id].scene];
       let message =
         'Событие ' +

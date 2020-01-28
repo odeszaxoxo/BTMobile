@@ -193,6 +193,8 @@ export default class SettingsScreen extends React.Component {
     var value = await AsyncStorage.getItem('smallTime');
     if (this.state.smallCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let getId = '99' + id.toString();
+        this.notif.cancelNotif(getId);
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
@@ -215,14 +217,12 @@ export default class SettingsScreen extends React.Component {
           title,
           message,
         );
-        console.log(
-          'test small',
-          new Date(datee - 60 * 1000 * smallItems[value]),
-          new Date(dateTest - 60 * 1000 * smallItems[value]),
-        );
       }
     } else {
-      this.notif.cancelAll();
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let getId = '99' + id.toString();
+        this.notif.cancelNotif(getId);
+      }
     }
   };
 
@@ -234,6 +234,8 @@ export default class SettingsScreen extends React.Component {
     var value = await AsyncStorage.getItem('bigTime');
     if (this.state.bigCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let getId = '98' + id.toString();
+        this.notifLong.cancelNotif(getId);
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
@@ -270,19 +272,17 @@ export default class SettingsScreen extends React.Component {
               ' часов.';
           }
         }
-        this.notif.scheduleNotif(
+        this.notifLong.scheduleNotif(
           new Date(datee - 60 * 60 * 1000 * bigItems[value]),
           title,
           message,
         );
-        console.log(
-          'testBig',
-          new Date(datee - 60 * 60 * 1000 * bigItems[value]),
-          new Date(dateTest - 60 * 60 * 1000 * bigItems[value]),
-        );
       }
     } else {
-      this.notif.cancelAll();
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let getId = '98' + id.toString();
+        this.notifLong.cancelNotif(getId);
+      }
     }
   };
 
@@ -322,7 +322,7 @@ export default class SettingsScreen extends React.Component {
               <Text
                 style={{
                   fontSize: 30,
-                  marginLeft: '2%',
+                  marginLeft: '5%',
                   textTransform: 'uppercase',
                 }}>
                 {this.state.username}
@@ -330,26 +330,29 @@ export default class SettingsScreen extends React.Component {
               <Text
                 style={{
                   fontSize: 14,
-                  marginLeft: '2%',
+                  marginLeft: '5%',
                   textTransform: 'uppercase',
                   color: 'lightgrey',
                 }}>
                 {this.state.username}
               </Text>
             </View>
-            <Button
-              title="Выйти"
-              iconName="sign-out"
-              onPress={this._logout}
-              buttonStyle={{
-                backgroundColor: 'transparent',
-                width: '50%',
-                borderColor: 'red',
-                borderRadius: 100,
-                borderWidth: 0.5,
-              }}
-              titleStyle={{color: 'red', fontSize: 12}}
-            />
+            <View style={{marginTop: '15%'}}>
+              <Button
+                title="Выйти"
+                iconName="sign-out"
+                onPress={this._logout}
+                buttonStyle={{
+                  backgroundColor: 'transparent',
+                  width: '50%',
+                  borderColor: 'red',
+                  borderRadius: 100,
+                  borderWidth: 0.5,
+                  marginLeft: '5%',
+                }}
+                titleStyle={{color: 'red', fontSize: 12}}
+              />
+            </View>
           </View>
         </View>
         <SectionRow text="Уведомления перед началом">
