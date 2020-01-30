@@ -63,21 +63,22 @@ export default class SettingsScreen extends React.Component {
     });
     await AsyncStorage.removeItem('smallTime');
     await AsyncStorage.setItem('smallTime', value);
-    console.log('asdasd');
     if (this.state.smallCheck === true) {
-      console.log('asas');
-      this.notif.cancelAll();
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let getId = '99' + id.toString();
+       // this.notif.cancelNotif(getId);
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
-        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+        let title =
+          this.state.scenes[realm.objects('EventItem')[id].scene] +
+          '.' +
+          ' Соб./Через';
         let message =
-          'Событие ' +
           realm.objects('EventItem')[id].title +
-          ' начнется через ' +
+          ' / ' +
           smallItems[value] +
           ' минут.';
         this.notif.scheduleNotif(
@@ -97,35 +98,36 @@ export default class SettingsScreen extends React.Component {
     await AsyncStorage.removeItem('bigTime');
     await AsyncStorage.setItem('bigTime', value);
     if (this.state.bigCheck === true) {
-      this.notif.cancelAll();
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        let getId = '98' + id.toString();
+      //  this.notifLong.cancelNotif(getId);
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
-        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+        let title =
+          this.state.scenes[realm.objects('EventItem')[id].scene] +
+          '.' +
+          ' Соб./Через';
         if (bigItems[value] === 1) {
           var message =
-            'Событие ' +
             realm.objects('EventItem')[id].title +
-            ' начнется через ' +
+            ' / ' +
             bigItems[value] +
             ' час.';
         } else {
           var arr = [2, 3, 4];
           if (arr.includes(bigItems[value])) {
             var message =
-              'Событие ' +
               realm.objects('EventItem')[id].title +
-              ' начнется через ' +
+              ' / ' +
               bigItems[value] +
-              ' часа.';
+              ' часа';
           } else {
             var message =
-              'Событие ' +
               realm.objects('EventItem')[id].title +
-              ' начнется через ' +
+              ' / ' +
               bigItems[value] +
               ' часов.';
           }
@@ -194,7 +196,8 @@ export default class SettingsScreen extends React.Component {
     if (this.state.smallCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '99' + id.toString();
-        this.notif.cancelNotif(getId);
+       this.notif.cancelNotif(getId);
+        this.notif.cancelNotif({id: getId});
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
@@ -205,11 +208,13 @@ export default class SettingsScreen extends React.Component {
             .local()
             .format('YYYY-MM-DDTHH:mm:ss'),
         );
-        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+        let title =
+          this.state.scenes[realm.objects('EventItem')[id].scene] +
+          '.' +
+          ' Соб./Через';
         let message =
-          'Событие ' +
           realm.objects('EventItem')[id].title +
-          ' начнется через ' +
+          ' / ' +
           smallItems[value] +
           ' минут.';
         this.notif.scheduleNotif(
@@ -236,38 +241,34 @@ export default class SettingsScreen extends React.Component {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '98' + id.toString();
         this.notifLong.cancelNotif(getId);
+        this.notifLong.cancelNotif({id: getId});
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
-        let title = this.state.scenes[realm.objects('EventItem')[id].scene];
-        let dateTest = new Date(
-          moment(datee)
-            .local()
-            .format('YYYY-MM-DDTHH:mm:ss'),
-        );
+        let title =
+          this.state.scenes[realm.objects('EventItem')[id].scene] +
+          '.' +
+          ' Соб./Через';
         if (bigItems[value] === 1) {
           var message =
-            'Событие ' +
             realm.objects('EventItem')[id].title +
-            ' начнется через ' +
+            ' / ' +
             bigItems[value] +
             ' час.';
         } else {
           var arr = [2, 3, 4];
           if (arr.includes(bigItems[value])) {
             var message =
-              'Событие ' +
               realm.objects('EventItem')[id].title +
-              ' начнется через ' +
+              ' / ' +
               bigItems[value] +
-              ' часа.';
+              ' часа';
           } else {
             var message =
-              'Событие ' +
               realm.objects('EventItem')[id].title +
-              ' начнется через ' +
+              ' / ' +
               bigItems[value] +
               ' часов.';
           }
@@ -394,7 +395,7 @@ export default class SettingsScreen extends React.Component {
           />
           <Item picker>
             <Picker
-              mode="dropdown"
+              mode="dialog"
               iosIcon={
                 <Icon
                   name="arrow-down"

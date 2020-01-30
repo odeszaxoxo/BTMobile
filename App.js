@@ -1,6 +1,7 @@
 import {createAppContainer, createSwitchNavigator} from 'react-navigation';
 import {createStackNavigator} from 'react-navigation-stack';
 import React, {Component} from 'react';
+import {AsyncStorage} from 'react-native';
 
 import SignInScreen from './src/scenes/AuthFlow/SignIn/SignInScreen';
 import AuthLoadingScreen from './src/scenes/AuthFlow/AuthLoadingScreen/AuthLoadingScreen';
@@ -16,6 +17,9 @@ import appConfig from './app.json';
 const Realm = require('realm');
 
 var _ = require('lodash');
+
+const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
+const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
 
 const AppStack = createStackNavigator({
   Agenda: AgendaScreen,
@@ -91,6 +95,10 @@ export default class App extends Component {
         4: 'Верхняя сцена',
         5: 'Балетный зал',
       },
+      smallTime: 'key0',
+      bigTime: 'key0',
+      bigCheck: true,
+      smallCheck: true,
     };
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -102,8 +110,27 @@ export default class App extends Component {
     );
   }
 
+  getUserPrefs = async () => {
+    try {
+      const small = JSON.parse(await AsyncStorage.getItem('smallCheck'));
+      this.setState({smallCheck: small});
+      const big = JSON.parse(await AsyncStorage.getItem('bigCheck'));
+      this.setState({bigCheck: big});
+      const smallTime = await AsyncStorage.getItem('smallTime');
+      this.setState({smallTime: smallTime});
+      const bigTime = await AsyncStorage.getItem('bigTime');
+      this.setState({bigTime: bigTime});
+      return [small, big, smallTime, bigTime];
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   componentDidMount() {
     const {realm} = this.state;
+    this.getUserPrefs();
+    this.notif.cancelDelivered();
+    this.notifLong.cancelDelivered();
     Realm.open({schema: [SelectedListSchema]}).then(() => {
       realm.write(() => {
         if (_.isEmpty(realm.objects('Selected'))) {
@@ -170,26 +197,62 @@ export default class App extends Component {
       }
     });
     for (var id = 0; id < realm.objects('EventItem').length; id++) {
+      let getId = '99' + id.toString();
+      let getBigId = '98' + id.toString();
+      this.notif.cancelNotif(getId);
+      this.notif.cancelNotif({id: getId});
+      this.notifLong.cancelNotif(getBigId);
+      this.notifLong.cancelNotif({id: getBigId});
       let result = realm.objects('EventItem')[id].time;
       let date = realm.objects('EventItem')[id].date;
       let startTime = date + ' ' + result.substring(0, 5) + ':00';
       let momentDate = moment(startTime);
       let datee = new Date(momentDate.toDate());
-      let title = this.state.scenes[realm.objects('EventItem')[id].scene];
+      let title =
+        this.state.scenes[realm.objects('EventItem')[id].scene] +
+        '.' +
+        ' Соб./Через';
       let message =
-        'Событие ' +
         realm.objects('EventItem')[id].title +
-        ' начнется через 5 минут.';
-      let messageLong =
-        'Событие ' +
-        realm.objects('EventItem')[id].title +
-        ' начнется через 1 час.';
-      this.notif.scheduleNotif(new Date(datee - 60 * 1000 * 5), title, message);
-      this.notifLong.scheduleNotif(
-        new Date(datee - 60 * 1000 * 60),
-        title,
-        messageLong,
-      );
+        ' / ' +
+        smallItems[this.state.smallTime] +
+        ' минут.';
+      if (bigItems[this.state.bigTime] === 1) {
+        var messageLong =
+          realm.objects('EventItem')[id].title +
+          ' / ' +
+          bigItems[this.state.bigTime] +
+          ' час.';
+      } else {
+        var arr = [2, 3, 4];
+        if (arr.includes(bigItems[this.state.bigTime])) {
+          var messageLong =
+            realm.objects('EventItem')[id].title +
+            ' / ' +
+            bigItems[this.state.bigTime] +
+            ' часа';
+        } else {
+          var messageLong =
+            realm.objects('EventItem')[id].title +
+            ' / ' +
+            bigItems[this.state.bigTime] +
+            ' часов.';
+        }
+      }
+      if (this.state.smallCheck === true) {
+        this.notif.scheduleNotif(
+          new Date(datee - 60 * 1000 * smallItems[this.state.smallTime]),
+          title,
+          message,
+        );
+      }
+      if (this.state.bigCheck === true) {
+        this.notifLong.scheduleNotif(
+          new Date(datee - 60 * 1000 * 60 * bigItems[this.state.bigTime]),
+          title,
+          messageLong,
+        );
+      }
     }
   }
 
