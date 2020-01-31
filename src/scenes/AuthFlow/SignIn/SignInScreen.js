@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   loginForm: {
-    marginTop: '80%',
+    marginTop: '40%',
     width: '100%',
     height: '50%',
     display: 'flex',
@@ -178,5 +178,6 @@ const styles = StyleSheet.create({
   },
   credentials: {
     alignSelf: 'center',
+    marginTop: '20%',
   },
 });

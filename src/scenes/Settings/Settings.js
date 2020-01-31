@@ -66,12 +66,14 @@ export default class SettingsScreen extends React.Component {
     if (this.state.smallCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '99' + id.toString();
-       // this.notif.cancelNotif(getId);
+        this.notif.cancelNotif(getId);
+        this.notif.cancelNotif({id: getId});
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
+        let utcDate = moment.utc(datee);
         let title =
           this.state.scenes[realm.objects('EventItem')[id].scene] +
           '.' +
@@ -81,11 +83,16 @@ export default class SettingsScreen extends React.Component {
           ' / ' +
           smallItems[value] +
           ' минут.';
-        this.notif.scheduleNotif(
-          new Date(datee - 60 * 1000 * smallItems[value]),
-          title,
-          message,
-        );
+        if (
+          new Date(utcDate) >
+          new Date(Date.now() + 60 * 1000 * smallItems[this.state.smallTime])
+        ) {
+          this.notif.scheduleNotif(
+            new Date(utcDate - 60 * 1000 * smallItems[value]),
+            title,
+            message,
+          );
+        }
       }
     }
   };
@@ -100,12 +107,14 @@ export default class SettingsScreen extends React.Component {
     if (this.state.bigCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '98' + id.toString();
-      //  this.notifLong.cancelNotif(getId);
+        this.notifLong.cancelNotif(getId);
+        this.notifLong.cancelNotif({id: getId});
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
+        let utcDate = moment.utc(datee);
         let title =
           this.state.scenes[realm.objects('EventItem')[id].scene] +
           '.' +
@@ -132,11 +141,16 @@ export default class SettingsScreen extends React.Component {
               ' часов.';
           }
         }
-        this.notif.scheduleNotif(
-          new Date(datee - 60 * 60 * 1000 * bigItems[value]),
-          title,
-          message,
-        );
+        if (
+          new Date(utcDate) >
+          new Date(Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime])
+        ) {
+          this.notif.scheduleNotif(
+            new Date(utcDate - 60 * 60 * 1000 * bigItems[value]),
+            title,
+            message,
+          );
+        }
       }
     }
   };
@@ -196,18 +210,14 @@ export default class SettingsScreen extends React.Component {
     if (this.state.smallCheck === true) {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '99' + id.toString();
-       this.notif.cancelNotif(getId);
+        this.notif.cancelNotif(getId);
         this.notif.cancelNotif({id: getId});
         let result = realm.objects('EventItem')[id].time;
         let date = realm.objects('EventItem')[id].date;
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
-        let dateTest = new Date(
-          moment(datee)
-            .local()
-            .format('YYYY-MM-DDTHH:mm:ss'),
-        );
+        let utcDate = moment.utc(datee);
         let title =
           this.state.scenes[realm.objects('EventItem')[id].scene] +
           '.' +
@@ -217,16 +227,22 @@ export default class SettingsScreen extends React.Component {
           ' / ' +
           smallItems[value] +
           ' минут.';
-        this.notif.scheduleNotif(
-          new Date(datee - 60 * 1000 * smallItems[value]),
-          title,
-          message,
-        );
+        if (
+          new Date(utcDate) >
+          new Date(Date.now() + 60 * 1000 * smallItems[this.state.smallTime])
+        ) {
+          this.notif.scheduleNotif(
+            new Date(datee - 60 * 1000 * smallItems[value]),
+            title,
+            message,
+          );
+        }
       }
     } else {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '99' + id.toString();
         this.notif.cancelNotif(getId);
+        this.notif.cancelNotif({id: getId});
       }
     }
   };
@@ -247,6 +263,7 @@ export default class SettingsScreen extends React.Component {
         let startTime = date + ' ' + result.substring(0, 5) + ':00';
         let momentDate = moment(startTime);
         let datee = new Date(momentDate.toDate());
+        let utcDate = moment.utc(datee);
         let title =
           this.state.scenes[realm.objects('EventItem')[id].scene] +
           '.' +
@@ -273,16 +290,22 @@ export default class SettingsScreen extends React.Component {
               ' часов.';
           }
         }
-        this.notifLong.scheduleNotif(
-          new Date(datee - 60 * 60 * 1000 * bigItems[value]),
-          title,
-          message,
-        );
+        if (
+          new Date(utcDate) >
+          new Date(Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime])
+        ) {
+          this.notifLong.scheduleNotif(
+            new Date(datee - 60 * 60 * 1000 * bigItems[value]),
+            title,
+            message,
+          );
+        }
       }
     } else {
       for (var id = 0; id < realm.objects('EventItem').length; id++) {
         let getId = '98' + id.toString();
         this.notifLong.cancelNotif(getId);
+        this.notifLong.cancelNotif({id: getId});
       }
     }
   };

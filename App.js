@@ -208,6 +208,10 @@ export default class App extends Component {
       let startTime = date + ' ' + result.substring(0, 5) + ':00';
       let momentDate = moment(startTime);
       let datee = new Date(momentDate.toDate());
+      let utcDate = moment.utc(datee);
+      let sendDate = moment(moment.utc(utcDate).toDate())
+        .local()
+        .format('YYYY-MM-DDTHH:mm:ss');
       let title =
         this.state.scenes[realm.objects('EventItem')[id].scene] +
         '.' +
@@ -239,19 +243,45 @@ export default class App extends Component {
             ' часов.';
         }
       }
-      if (this.state.smallCheck === true) {
-        this.notif.scheduleNotif(
-          new Date(datee - 60 * 1000 * smallItems[this.state.smallTime]),
-          title,
-          message,
-        );
+      if (
+        new Date(utcDate) >
+        new Date(Date.now() + 60 * 1000 * smallItems[this.state.smallTime])
+      ) {
+        if (this.state.smallCheck === true) {
+          this.notif.scheduleNotif(
+            new Date(utcDate - 60 * 1000 * smallItems[this.state.smallTime]),
+            title,
+            message,
+          );
+          console.log(
+            new Date(utcDate),
+            new Date(Date.now() + 60 * 1000 * smallItems[this.state.smallTime]),
+            'small',
+          );
+        }
       }
-      if (this.state.bigCheck === true) {
-        this.notifLong.scheduleNotif(
-          new Date(datee - 60 * 1000 * 60 * bigItems[this.state.bigTime]),
-          title,
-          messageLong,
-        );
+      if (
+        new Date(utcDate) >
+        new Date(Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime])
+      ) {
+        if (this.state.bigCheck === true) {
+          this.notifLong.scheduleNotif(
+            new Date(utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime]),
+            title,
+            messageLong,
+          );
+          console.log(
+            new Date(utcDate),
+            new Date(
+              Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
+            ),
+            'big',
+            new Date(utcDate) >
+              new Date(
+                Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
+              ),
+          );
+        }
       }
     }
   }
