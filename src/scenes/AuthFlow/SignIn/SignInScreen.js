@@ -72,7 +72,14 @@ export default class SignInScreen extends React.Component {
   render() {
     return (
       <ImageBackground source={login} style={styles.container}>
-        <KeyboardAvoidingView behavior="position">
+        <KeyboardAvoidingView
+          behavior="position"
+          style={{
+            minHeight: '45%',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+            marginTop: '50%',
+          }}>
           <View style={styles.loginForm}>
             <View style={styles.input}>
               <Input
@@ -125,12 +132,12 @@ export default class SignInScreen extends React.Component {
               </Text>
             </View>
           </View>
-          <View style={styles.credentials}>
-            <Text h4 h4Style={{color: '#fff', fontSize: 10, fontWeight: '200'}}>
-              Powered by Adamcode
-            </Text>
-          </View>
         </KeyboardAvoidingView>
+        <View style={styles.credentials}>
+          <Text h4 h4Style={{color: '#fff', fontSize: 10, fontWeight: '200'}}>
+            Powered by Adamcode
+          </Text>
+        </View>
       </ImageBackground>
     );
   }
@@ -159,7 +166,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   loginForm: {
-    marginTop: '40%',
     width: '100%',
     height: '50%',
     display: 'flex',
@@ -178,6 +184,5 @@ const styles = StyleSheet.create({
   },
   credentials: {
     alignSelf: 'center',
-    marginTop: '20%',
   },
 });
