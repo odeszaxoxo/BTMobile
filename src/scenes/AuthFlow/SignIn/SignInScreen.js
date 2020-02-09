@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ImageBackground,
   KeyboardAvoidingView,
-  Alert,
 } from 'react-native';
 import {Button, Input, Icon, Text} from 'react-native-elements';
 import login from '../../../images/login.jpg.png';
@@ -64,7 +63,6 @@ export default class SignInScreen extends React.Component {
           'modified',
         );
       });
-      //this.setState({scenes: realm.objects('Scene')});
       this.setState({realm});
     });
   }
