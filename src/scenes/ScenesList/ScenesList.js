@@ -1,5 +1,6 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {Component} from 'react';
-import {View, Button, AsyncStorage, TouchableHighlightBase} from 'react-native';
+import {View, Button} from 'react-native';
 import SelectMultiple from 'react-native-select-multiple';
 import {isEmpty} from 'lodash';
 
