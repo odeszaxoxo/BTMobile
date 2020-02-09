@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {View, StyleSheet, AsyncStorage, Text} from 'react-native';
+import {View, AsyncStorage, Text} from 'react-native';
 import ReactNativeSettingsPage, {
   SectionRow,
   SwitchRow,
@@ -457,31 +457,3 @@ export default class SettingsScreen extends React.Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    height: '100%',
-  },
-  loginForm: {
-    marginTop: '80%',
-    width: '100%',
-    height: '50%',
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  loginButtonContainer: {
-    width: 200,
-    height: 50,
-    alignSelf: 'center',
-    marginTop: 40,
-  },
-  input: {
-    width: '80%',
-    alignSelf: 'center',
-    marginTop: 10,
-  },
-  credentials: {
-    alignSelf: 'center',
-  },
-});
