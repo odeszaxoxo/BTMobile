@@ -154,7 +154,7 @@ export default class AgendaView extends Component {
     var arr2 = [1, 2, 3, 4, 5];
     this.props.navigation.addListener('didFocus', () => {
       const {realm} = this.state;
-      if (realm.objects('Selected')[0].selected !== null) {
+      if (realm.objects('Selected')[0].selected == null) {
         var e = realm
           .objects('Selected')[0]
           .selected.match(/\d+/g)

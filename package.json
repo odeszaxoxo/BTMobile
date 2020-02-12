@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "^2.1.0",
+    "@react-native-community/netinfo": "^5.3.3",
     "@react-native-community/push-notification-ios": "^1.0.5",
+    "btoa": "^1.2.1",
     "clone-deep": "^4.0.1",
     "immutability-helper": "^3.0.1",
     "jetifier": "^1.6.5",
@@ -22,6 +24,7 @@
     "node": "^10.18.1",
     "react": "16.9.0",
     "react-native": "0.61.5",
+    "react-native-base64": "0.0.2",
     "react-native-calendars": "^1.257.0",
     "react-native-elements": "^1.2.7",
     "react-native-gesture-handler": "^1.5.3",

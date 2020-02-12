@@ -31,7 +31,7 @@ class ScenesList extends Component {
     const {navigation} = this.props;
     this.focusListener = navigation.addListener('willFocus', () => {
       const {realm} = this.state;
-      if (realm.objects('Selected')[0].selected !== null) {
+      if (realm.objects('Selected')[0].selected == null) {
         var b = realm
           .objects('Selected')[0]
           .selected.match(/\d+/g)
@@ -59,6 +59,7 @@ class ScenesList extends Component {
         value: realm.objects('Scene')[i].id,
       };
       list.push(item);
+      console.log(item);
     }
     // eslint-disable-next-line react/no-did-mount-set-state
     this.setState({scenes: list});

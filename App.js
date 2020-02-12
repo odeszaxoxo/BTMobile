@@ -2,6 +2,7 @@ import {createAppContainer, createSwitchNavigator} from 'react-navigation';
 import {createStackNavigator} from 'react-navigation-stack';
 import React, {Component} from 'react';
 import {AsyncStorage} from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 
 import SignInScreen from './src/scenes/AuthFlow/SignIn/SignInScreen';
 import AuthLoadingScreen from './src/scenes/AuthFlow/AuthLoadingScreen/AuthLoadingScreen';
@@ -51,6 +52,12 @@ const EventSchema = {
     id: 'int',
   },
   primaryKey: 'id',
+};
+
+const SceneSchema = {
+  name: 'Scene',
+  primaryKey: 'id',
+  properties: {selected: 'bool', id: 'int', title: 'string', color: 'string'},
 };
 
 const SelectedListSchema = {
@@ -129,14 +136,78 @@ export default class App extends Component {
   componentDidMount() {
     const {realm} = this.state;
     this.getUserPrefs();
-    this.notif.cancelDelivered();
-    this.notifLong.cancelDelivered();
+    var testBody = JSON.stringify({
+      username: 'ext.a.troshin@test.local',
+      password: 'P@ssw0rd',
+      isLogin: '1',
+    });
+    var testArr = [];
+    (async () => {
+      const rawResponse = await fetch(
+        'http://calendar.bolshoi.ru:8050/GetScenes',
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: testBody,
+        },
+      );
+      const content = await rawResponse.json();
+
+      for (var k = 1; k <= content.GetScenesResult.length; k++) {
+        testArr.push(k);
+      }
+
+      NetInfo.fetch().then(state => {
+        if (state.isConnected === true) {
+          Realm.open({
+            schema: [SceneSchema],
+          }).then(() => {
+            realm.write(() => {
+              if (realm.objects('Scene') !== null) {
+                realm.delete(realm.objects('Scene'));
+                for (var l = 1; l <= content.GetScenesResult.length; l++) {
+                  realm.create(
+                    'Scene',
+                    {
+                      selected: false,
+                      id: l,
+                      title: content.GetScenesResult[l - 1].Name,
+                      color: content.GetScenesResult[l - 1].Color,
+                    },
+                    'modified',
+                  );
+                  console.log(realm.objects('Scene'));
+                }
+              } else {
+                for (var l = 1; l <= content.GetScenesResult.length; l++) {
+                  realm.create(
+                    'Scene',
+                    {
+                      selected: false,
+                      id: l,
+                      title: content.GetScenesResult[l - 1].Name,
+                      color: content.GetScenesResult[l - 1].Color,
+                    },
+                    'modified',
+                  );
+                  console.log(realm.objects('Scene'));
+                }
+              }
+            });
+            this.setState({realm});
+          });
+        }
+      });
+    })();
     Realm.open({schema: [SelectedListSchema]}).then(() => {
       realm.write(() => {
         if (_.isEmpty(realm.objects('Selected'))) {
           realm.create(
             'Selected',
-            {selected: JSON.stringify([1, 2, 3, 4, 5]), id: 1},
+            {selected: JSON.stringify(testArr), id: 1},
             'modified',
           );
           this.setState({realm});

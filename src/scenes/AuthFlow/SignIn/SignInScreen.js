@@ -12,12 +12,6 @@ import login from '../../../images/login.jpg.png';
 
 const Realm = require('realm');
 
-const SceneSchema = {
-  name: 'Scene',
-  primaryKey: 'id',
-  properties: {selected: 'bool', id: 'int', title: 'string'},
-};
-
 export default class SignInScreen extends React.Component {
   constructor(props) {
     super(props);
@@ -32,40 +26,6 @@ export default class SignInScreen extends React.Component {
   static navigationOptions = {
     title: '',
   };
-
-  componentDidMount() {
-    const {realm} = this.state;
-    Realm.open({schema: [SceneSchema]}).then(() => {
-      realm.write(() => {
-        realm.create(
-          'Scene',
-          {selected: false, id: 1, title: 'Историческая сцена'},
-          'modified',
-        );
-        realm.create(
-          'Scene',
-          {selected: false, id: 2, title: 'Новая сцена'},
-          'modified',
-        );
-        realm.create(
-          'Scene',
-          {selected: false, id: 3, title: 'Бетховенский зал'},
-          'modified',
-        );
-        realm.create(
-          'Scene',
-          {selected: false, id: 4, title: 'Верхняя сцена'},
-          'modified',
-        );
-        realm.create(
-          'Scene',
-          {selected: false, id: 5, title: 'Балетный зал'},
-          'modified',
-        );
-      });
-      this.setState({realm});
-    });
-  }
 
   render() {
     return (

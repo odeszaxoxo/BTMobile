@@ -70,8 +70,4 @@ export default class NotificationService {
   cancelAll() {
     PushNotification.cancelAllLocalNotifications();
   }
-
-  cancelDelivered() {
-    PushNotification.removeAllDeliveredNotifications();
-  }
 }

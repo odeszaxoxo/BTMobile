@@ -69,8 +69,4 @@ export default class NotificationServiceLong {
   cancelAll() {
     PushNotification.cancelAllLocalNotifications();
   }
-
-  cancelDelivered() {
-    PushNotification.removeAllDeliveredNotifications();
-  }
 }
