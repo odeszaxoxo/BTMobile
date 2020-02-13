@@ -179,7 +179,6 @@ export default class App extends Component {
                     },
                     'modified',
                   );
-                  console.log(realm.objects('Scene'));
                 }
               } else {
                 for (var l = 1; l <= content.GetScenesResult.length; l++) {
@@ -193,7 +192,6 @@ export default class App extends Component {
                     },
                     'modified',
                   );
-                  console.log(realm.objects('Scene'));
                 }
               }
             });
@@ -202,6 +200,46 @@ export default class App extends Component {
         }
       });
     })();
+    NetInfo.fetch().then(state => {
+      if (state.isConnected === true) {
+        (async () => {
+          const rawResponse = await fetch(
+            'http://calendar.bolshoi.ru:8050/GetScenes',
+            {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: testBody,
+            },
+          );
+          const content = await rawResponse.json();
+          console.log(content);
+          for (var l = 1; l <= content.GetScenesResult.length; l++) {
+            console.log(content.GetScenesResult[l - 1].ResourceId);
+            (async () => {
+              const rawResponse1 = await fetch(
+                'http://calendar.bolshoi.ru:8050/GetEvents/' +
+                  content.GetScenesResult[l - 1].ResourceId,
+                {
+                  method: 'POST',
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                  },
+                  body: testBody,
+                },
+              );
+              const content1 = await rawResponse1.json();
+              for (var p = 1; p <= content1.GetEventsResult.length; p++) {
+                console.log(content1.GetEventsResult[p - 1].Title);
+              }
+            })();
+          }
+        })();
+      }
+    });
     Realm.open({schema: [SelectedListSchema]}).then(() => {
       realm.write(() => {
         if (_.isEmpty(realm.objects('Selected'))) {
