@@ -101,37 +101,73 @@ export default class SignInScreen extends React.Component {
   }
 
   _signInAsync = async () => {
-    var testBody = JSON.stringify({
-      username: this.state.email,
-      password: this.state.password,
-      isLogin: '1',
-    });
-    (async () => {
-      const rawResponse = await fetch(
-        'http://calendar.bolshoi.ru:8050/TestLogin',
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
+    var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    console.log(mask.test(this.state.email.toLowerCase()));
+    if (mask.test(this.state.email.toLowerCase()) === true) {
+      var testBody = JSON.stringify({
+        username: this.state.email,
+        password: this.state.password,
+        isLogin: '0',
+      });
+      (async () => {
+        const rawResponse = await fetch(
+          'http://calendar.bolshoi.ru:8050/TestLogin',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
           },
-          body: testBody,
-        },
-      );
-      const content2 = await rawResponse.json();
-      console.log(content2.TestLoginResult);
-      if (content2.TestLoginResult) {
-        await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
-        await AsyncStorage.setItem('user', this.state.email);
-        await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
-        await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
-        await AsyncStorage.setItem('bigTime', 'key0');
-        await AsyncStorage.setItem('smallTime', 'key0');
-        this.props.navigation.navigate('App');
-      } else {
-        this.setState({correct: 'flex'});
-      }
-    })();
+        );
+        const content2 = await rawResponse.json();
+        console.log(content2.TestLoginResult);
+        if (content2.TestLoginResult) {
+          await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
+          await AsyncStorage.setItem('user', this.state.email);
+          await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
+          await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
+          await AsyncStorage.setItem('bigTime', 'key0');
+          await AsyncStorage.setItem('smallTime', 'key0');
+          this.props.navigation.navigate('App');
+        } else {
+          this.setState({correct: 'flex'});
+        }
+      })();
+    } else {
+      var testBody = JSON.stringify({
+        username: 'TEST\\' + this.state.email,
+        password: this.state.password,
+        isLogin: '1',
+      });
+      (async () => {
+        const rawResponse = await fetch(
+          'http://calendar.bolshoi.ru:8050/TestLogin',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const content2 = await rawResponse.json();
+        console.log(content2.TestLoginResult);
+        if (content2.TestLoginResult) {
+          await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
+          await AsyncStorage.setItem('user', this.state.email);
+          await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
+          await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
+          await AsyncStorage.setItem('bigTime', 'key0');
+          await AsyncStorage.setItem('smallTime', 'key0');
+          this.props.navigation.navigate('App');
+        } else {
+          this.setState({correct: 'flex'});
+        }
+      })();
+    }
   };
 }
 

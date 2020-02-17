@@ -8,14 +8,14 @@ import {
   TouchableHighlight,
   Alert,
   TouchableOpacity,
+  AsyncStorage,
 } from 'react-native';
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Button} from 'react-native-elements';
 import jsonData from '../../data/data.json';
 import NotificationService from '../../services/NotificationService';
 import appConfig from '../../../app.json';
-
-const Realm = require('realm');
+import realm from '../../services/realm';
 
 var _ = require('lodash');
 
@@ -88,7 +88,6 @@ export default class AgendaView extends Component {
       selectedTime: '',
       selectedText: '',
       selectedScene: '',
-      realm: new Realm(),
       eventTest: {},
       update: 1,
       refresh: false,
@@ -147,26 +146,22 @@ export default class AgendaView extends Component {
     };
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     this.props.navigation.setParams({
       reset: this.reset.bind(this),
     });
-    var arr2 = [1, 2, 3, 4, 5];
-    this.props.navigation.addListener('didFocus', () => {
-      const {realm} = this.state;
-      if (realm.objects('Selected')[0].selected == null) {
-        var e = realm
-          .objects('Selected')[0]
-          .selected.match(/\d+/g)
-          .map(Number);
+    this.props.navigation.addListener('didFocus', async () => {
+      var testArr = await AsyncStorage.getItem('Selected');
+      if (testArr === null) {
+        var arr2 = [];
+        for (let i = 1; i <= realm.objects('Scene').length; i++) {
+          arr2.push(i);
+        }
+        await AsyncStorage.setItem('Selected', JSON.stringify(arr2));
       } else {
-        var e = [1, 2, 3, 4, 5];
+        arr2 = testArr;
       }
-      if (e === []) {
-        arr2 = [1, 2, 3, 4, 5];
-      } else {
-        arr2 = e;
-      }
+      console.log(testArr);
       var arr = {};
       var dates = [];
       for (let i = 0; i < realm.objects('EventItem').length; i++) {
@@ -201,6 +196,7 @@ export default class AgendaView extends Component {
         }
       }
       this.setState({eventTest: arr});
+      console.log(realm.objects('Scene'));
     });
   }
 
@@ -315,8 +311,7 @@ export default class AgendaView extends Component {
   }
 
   renderItem(item) {
-    const sceneID = item.scene;
-    const sceneName = this.state.scenes[sceneID];
+    const sceneName = realm.objects('Scene')[item.scene - 1].title;
     return (
       <TouchableOpacity
         onPress={() => {
@@ -333,7 +328,10 @@ export default class AgendaView extends Component {
               <Text style={styles.time}>{item.time}</Text>
               <Text style={styles.title}>{item.title}</Text>
               <Text
-                style={{fontSize: 12, color: this.state.scenesColor[sceneID]}}>
+                style={{
+                  fontSize: 12,
+                  color: realm.objects('Scene')[item.scene - 1].color,
+                }}>
                 {sceneName}
               </Text>
             </View>

@@ -342,7 +342,7 @@ export default class SettingsScreen extends React.Component {
               justifyContent: 'space-between',
               width: '50%',
             }}>
-            <View style={{marginTop: '5%'}}>
+            <View>
               <Text
                 style={{
                   fontSize: 30,

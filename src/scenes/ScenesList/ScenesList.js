@@ -1,16 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {Component} from 'react';
-import {View, Button} from 'react-native';
+import {View, Button, AsyncStorage} from 'react-native';
 import SelectMultiple from 'react-native-select-multiple';
 import {isEmpty} from 'lodash';
-
-const Realm = require('realm');
-
-const SelectedListSchema = {
-  name: 'Selected',
-  primaryKey: 'id',
-  properties: {selected: 'string', id: 'int'},
-};
+import realm from '../../services/realm';
 
 class ScenesList extends Component {
   constructor(props) {
@@ -18,9 +11,9 @@ class ScenesList extends Component {
     this.state = {
       scenes: [],
       selectedScenes: [],
-      realm: new Realm(),
       disabled: false,
       all: [],
+      selected: [],
     };
   }
   static navigationOptions = {
@@ -29,19 +22,21 @@ class ScenesList extends Component {
 
   componentDidMount() {
     const {navigation} = this.props;
-    this.focusListener = navigation.addListener('willFocus', () => {
-      const {realm} = this.state;
-      if (realm.objects('Selected')[0].selected == null) {
-        var b = realm
-          .objects('Selected')[0]
-          .selected.match(/\d+/g)
-          .map(Number);
+    this.focusListener = navigation.addListener('willFocus', async () => {
+      var testArr = await AsyncStorage.getItem('Selected');
+      if (testArr === null) {
+        var arr2 = [];
+        for (let i = 1; i <= realm.objects('Scene').length; i++) {
+          arr2.push(i);
+        }
+        await AsyncStorage.setItem('Selected', JSON.stringify(arr2));
       } else {
-        var b = [1, 2, 3, 4, 5];
+        arr2 = testArr;
       }
+      this.setState({selected: arr2});
       var list1 = [];
       for (var x = 0; x < realm.objects('Scene').length; x++) {
-        if (b.includes(realm.objects('Scene')[x].id)) {
+        if (arr2.includes(realm.objects('Scene')[x].id)) {
           var item1 = {
             label: realm.objects('Scene')[x].title,
             value: realm.objects('Scene')[x].id,
@@ -51,7 +46,6 @@ class ScenesList extends Component {
       }
       this.setState({selectedScenes: list1});
     });
-    const {realm} = this.state;
     var list = [];
     for (var i = 0; i < realm.objects('Scene').length; i++) {
       var item = {
@@ -59,7 +53,6 @@ class ScenesList extends Component {
         value: realm.objects('Scene')[i].id,
       };
       list.push(item);
-      console.log(item);
     }
     // eslint-disable-next-line react/no-did-mount-set-state
     this.setState({scenes: list});
@@ -77,22 +70,14 @@ class ScenesList extends Component {
     this.setState({selectedScenes: null});
   };
 
-  goToAgenda = () => {
+  goToAgenda = async () => {
+    await AsyncStorage.removeItem('Selected');
     const {navigation} = this.props;
     var selectedList = [];
     for (var j = 0; j < this.state.selectedScenes.length; j++) {
       selectedList.push(this.state.selectedScenes[j].value);
     }
-    Realm.open({schema: [SelectedListSchema]}).then(realm => {
-      realm.write(() => {
-        realm.create(
-          'Selected',
-          {selected: JSON.stringify(selectedList), id: 1},
-          'modified',
-        );
-        this.setState({realm});
-      });
-    });
+    await AsyncStorage.setItem('Selected', JSON.stringify(selectedList));
     navigation.navigate('Agenda');
   };
 

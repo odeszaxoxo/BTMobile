@@ -1,3 +1,4 @@
+/* eslint-disable react/no-did-mount-set-state */
 import {createAppContainer, createSwitchNavigator} from 'react-navigation';
 import {createStackNavigator} from 'react-navigation-stack';
 import React, {Component} from 'react';
@@ -14,10 +15,9 @@ import moment from 'moment';
 import NotificationService from './src/services/NotificationService';
 import NotificationServiceLong from './src/services/NotificationServiceLong';
 import appConfig from './app.json';
+import realm from './src/services/realm';
 
-const Realm = require('realm');
-
-var _ = require('lodash');
+//var _ = require('lodash');
 
 const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
 const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
@@ -27,6 +27,7 @@ const AppStack = createStackNavigator({
   Scenes: Scenes,
   Settings: Settings,
 });
+
 const AuthStack = createStackNavigator(
   {SignIn: SignInScreen},
   {
@@ -41,30 +42,6 @@ const AuthStack = createStackNavigator(
     },
   },
 );
-
-const EventSchema = {
-  name: 'EventItem',
-  properties: {
-    title: 'string',
-    scene: 'int',
-    time: 'string',
-    date: 'string',
-    id: 'int',
-  },
-  primaryKey: 'id',
-};
-
-const SceneSchema = {
-  name: 'Scene',
-  primaryKey: 'id',
-  properties: {selected: 'bool', id: 'int', title: 'string', color: 'string'},
-};
-
-const SelectedListSchema = {
-  name: 'Selected',
-  properties: {selected: 'string', id: 'int'},
-  primaryKey: 'id',
-};
 
 const SwitchNavigator = createSwitchNavigator(
   {
@@ -93,7 +70,7 @@ export default class App extends Component {
     super(props);
     this.state = {
       data: jsonData,
-      realm: new Realm(),
+      dataAPI: {},
       senderId: appConfig.senderID,
       scenes: {
         1: 'Историческая сцена',
@@ -106,6 +83,7 @@ export default class App extends Component {
       bigTime: 'key0',
       bigCheck: true,
       smallCheck: true,
+      username: null,
     };
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -127,84 +105,107 @@ export default class App extends Component {
       this.setState({smallTime: smallTime});
       const bigTime = await AsyncStorage.getItem('bigTime');
       this.setState({bigTime: bigTime});
-      return [small, big, smallTime, bigTime];
+      const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+      this.setState({usertoken: token});
+      return [small, big, smallTime, bigTime, token];
     } catch (error) {
       console.log(error.message);
     }
   };
 
-  componentDidMount() {
-    const {realm} = this.state;
+  async componentDidMount() {
     this.getUserPrefs();
-    var testBody = JSON.stringify({
-      username: 'ext.a.troshin@test.local',
-      password: 'P@ssw0rd',
-      isLogin: '1',
-    });
+    const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+    this.setState({usertoken: token});
+    var testBody = this.state.usertoken;
     var testArr = [];
-    (async () => {
-      const rawResponse = await fetch(
-        'http://calendar.bolshoi.ru:8050/GetScenes',
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: testBody,
+    let rawResponseScenes = await fetch(
+      'http://calendar.bolshoi.ru:8050/GetScenes',
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
         },
-      );
-      const content = await rawResponse.json();
-
-      for (var k = 1; k <= content.GetScenesResult.length; k++) {
-        testArr.push(k);
+        body: testBody,
+      },
+    );
+    const content = await rawResponseScenes.json();
+    for (var k = 1; k <= content.GetScenesResult.length; k++) {
+      testArr.push(k);
+    }
+    realm.write(() => {
+      if (realm.objects('Selected').length < 1) {
+        realm.create(
+          'Selected',
+          {selected: JSON.stringify(testArr), id: 1},
+          'modified',
+        );
+        this.setState({realm});
       }
+    });
 
-      NetInfo.fetch().then(state => {
-        if (state.isConnected === true) {
-          Realm.open({
-            schema: [SceneSchema],
-          }).then(() => {
-            realm.write(() => {
-              if (realm.objects('Scene') !== null) {
-                realm.delete(realm.objects('Scene'));
-                for (var l = 1; l <= content.GetScenesResult.length; l++) {
-                  realm.create(
-                    'Scene',
-                    {
-                      selected: false,
-                      id: l,
-                      title: content.GetScenesResult[l - 1].Name,
-                      color: content.GetScenesResult[l - 1].Color,
-                    },
-                    'modified',
-                  );
-                }
-              } else {
-                for (var l = 1; l <= content.GetScenesResult.length; l++) {
-                  realm.create(
-                    'Scene',
-                    {
-                      selected: false,
-                      id: l,
-                      title: content.GetScenesResult[l - 1].Name,
-                      color: content.GetScenesResult[l - 1].Color,
-                    },
-                    'modified',
-                  );
-                }
-              }
-            });
-            this.setState({realm});
-          });
-        }
-      });
-    })();
     NetInfo.fetch().then(state => {
       if (state.isConnected === true) {
-        (async () => {
-          const rawResponse = await fetch(
-            'http://calendar.bolshoi.ru:8050/GetScenes',
+        realm.write(() => {
+          if (realm.objects('Scene') !== null) {
+            realm.delete(realm.objects('Scene'));
+            for (var l = 1; l <= content.GetScenesResult.length; l++) {
+              realm.create(
+                'Scene',
+                {
+                  selected: false,
+                  id: l,
+                  title: content.GetScenesResult[l - 1].Name,
+                  color: content.GetScenesResult[l - 1].Color,
+                },
+                'modified',
+              );
+            }
+          } else {
+            for (var l = 1; l <= content.GetScenesResult.length; l++) {
+              realm.create(
+                'Scene',
+                {
+                  selected: false,
+                  id: l,
+                  title: content.GetScenesResult[l - 1].Name,
+                  color: content.GetScenesResult[l - 1].Color,
+                },
+                'modified',
+              );
+            }
+          }
+        });
+        this.setState({realm});
+      }
+    });
+    NetInfo.fetch().then(async state => {
+      if (state.isConnected === true && realm.objects('EventItem') === null) {
+        let rawResponse = await fetch(
+          'http://calendar.bolshoi.ru:8050/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const contentScenes = await rawResponse.json();
+        var testData = [];
+        id = 0;
+        // if (realm.objects('EventItem') !== null) {
+        //   realm.write(() => {
+        //     let allEvents = realm.objects('EventItem');
+        //     realm.delete(allEvents);
+        //   });
+        // }
+        for (var l = 1; l <= contentScenes.GetScenesResult.length; l++) {
+          let rawResponse1 = await fetch(
+            'http://calendar.bolshoi.ru:8050/GetEvents/' +
+              content.GetScenesResult[l - 1].ResourceId,
             {
               method: 'POST',
               headers: {
@@ -214,95 +215,45 @@ export default class App extends Component {
               body: testBody,
             },
           );
-          const content = await rawResponse.json();
-          console.log(content);
-          for (var l = 1; l <= content.GetScenesResult.length; l++) {
-            console.log(content.GetScenesResult[l - 1].ResourceId);
-            (async () => {
-              const rawResponse1 = await fetch(
-                'http://calendar.bolshoi.ru:8050/GetEvents/' +
-                  content.GetScenesResult[l - 1].ResourceId,
-                {
-                  method: 'POST',
-                  headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                  },
-                  body: testBody,
-                },
-              );
-              const content1 = await rawResponse1.json();
-              for (var p = 1; p <= content1.GetEventsResult.length; p++) {
-                console.log(content1.GetEventsResult[p - 1].Title);
-              }
-            })();
-          }
-        })();
-      }
-    });
-    Realm.open({schema: [SelectedListSchema]}).then(() => {
-      realm.write(() => {
-        if (_.isEmpty(realm.objects('Selected'))) {
-          realm.create(
-            'Selected',
-            {selected: JSON.stringify(testArr), id: 1},
-            'modified',
-          );
-          this.setState({realm});
-        }
-      });
-    });
-    Realm.open({schema: [EventSchema]}).then(() => {
-      if (realm.objects('EventItem') == null) {
-        realm.write(() => {
-          for (var i = 0; i < Object.keys(this.state.data.events).length; i++) {
-            realm.create('EventItem', {
-              title: this.state.data.events[
-                Object.keys(this.state.data.events)[i]
-              ].text,
-              date: this.state.data.events[
-                Object.keys(this.state.data.events)[i]
-              ].date,
-              scene: this.state.data.events[
-                Object.keys(this.state.data.events)[i]
-              ].scene,
-              time: this.state.data.events[
-                Object.keys(this.state.data.events)[i]
-              ].time,
-              id: i,
+          const content1 = await rawResponse1.json();
+          for (var p = 1; p <= content1.GetEventsResult.length; p++) {
+            var beginTime = content1.GetEventsResult[
+              p - 1
+            ].StartDateStr.substring(11);
+            var endingTime = content1.GetEventsResult[
+              p - 1
+            ].EndDateStr.substring(11);
+            var eventTime = beginTime + ' - ' + endingTime;
+            var date = content1.GetEventsResult[p - 1].StartDateStr.substring(
+              0,
+              10,
+            )
+              .split('.')
+              .join('-');
+            var dateFormatted =
+              date.substring(6) +
+              '-' +
+              date.substring(3).substring(0, 2) +
+              '-' +
+              date.substring(0, 2);
+            testData.push({
+              text: content1.GetEventsResult[p - 1].Title,
+              scene: content1.GetEventsResult[p - 1].ResourceId,
+              time: eventTime,
+              date: dateFormatted,
+            });
+            realm.write(() => {
+              realm.create('EventItem', {
+                title: content1.GetEventsResult[p - 1].Title,
+                date: dateFormatted,
+                scene: l,
+                time: eventTime,
+                id: id++,
+              });
+              this.setState({realm});
             });
           }
-          this.setState({realm});
-        });
-      } else {
-        realm.write(() => {
-          let allEvents = realm.objects('EventItem');
-          realm.delete(allEvents);
-        });
-        realm.write(() => {
-          for (var i = 0; i < Object.keys(this.state.data.events).length; i++) {
-            realm.create(
-              'EventItem',
-              {
-                title: this.state.data.events[
-                  Object.keys(this.state.data.events)[i]
-                ].text,
-                date: this.state.data.events[
-                  Object.keys(this.state.data.events)[i]
-                ].date,
-                scene: this.state.data.events[
-                  Object.keys(this.state.data.events)[i]
-                ].scene,
-                time: this.state.data.events[
-                  Object.keys(this.state.data.events)[i]
-                ].time,
-                id: i,
-              },
-              true,
-            );
-          }
-          this.setState({realm});
-        });
+        }
       }
     });
     for (var id = 0; id < realm.objects('EventItem').length; id++) {
@@ -318,9 +269,9 @@ export default class App extends Component {
       let momentDate = moment(startTime);
       let datee = new Date(momentDate.toDate());
       let utcDate = moment.utc(datee);
-      let sendDate = moment(moment.utc(utcDate).toDate())
-        .local()
-        .format('YYYY-MM-DDTHH:mm:ss');
+      // let sendDate = moment(moment.utc(utcDate).toDate())
+      //   .local()
+      //   .format('YYYY-MM-DDTHH:mm:ss');
       let title =
         this.state.scenes[realm.objects('EventItem')[id].scene] +
         '.' +
@@ -361,11 +312,6 @@ export default class App extends Component {
             new Date(utcDate - 60 * 1000 * smallItems[this.state.smallTime]),
             title,
             message,
-          );
-          console.log(
-            new Date(utcDate),
-            new Date(Date.now() + 60 * 1000 * smallItems[this.state.smallTime]),
-            'small',
           );
         }
       }
