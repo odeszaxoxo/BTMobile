@@ -102,7 +102,6 @@ export default class SignInScreen extends React.Component {
 
   _signInAsync = async () => {
     var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    console.log(mask.test(this.state.email.toLowerCase()));
     if (mask.test(this.state.email.toLowerCase()) === true) {
       var testBody = JSON.stringify({
         username: this.state.email,
@@ -122,7 +121,6 @@ export default class SignInScreen extends React.Component {
           },
         );
         const content2 = await rawResponse.json();
-        console.log(content2.TestLoginResult);
         if (content2.TestLoginResult) {
           await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
           await AsyncStorage.setItem('user', this.state.email);

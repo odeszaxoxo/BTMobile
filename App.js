@@ -113,40 +113,38 @@ export default class App extends Component {
     }
   };
 
-  async componentDidMount() {
-    this.getUserPrefs();
+  fetchData = async () => {
     const token = JSON.parse(await AsyncStorage.getItem('userToken'));
     this.setState({usertoken: token});
     var testBody = this.state.usertoken;
     var testArr = [];
-    let rawResponseScenes = await fetch(
-      'http://calendar.bolshoi.ru:8050/GetScenes',
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: testBody,
-      },
-    );
-    const content = await rawResponseScenes.json();
-    for (var k = 1; k <= content.GetScenesResult.length; k++) {
-      testArr.push(k);
-    }
-    realm.write(() => {
-      if (realm.objects('Selected').length < 1) {
-        realm.create(
-          'Selected',
-          {selected: JSON.stringify(testArr), id: 1},
-          'modified',
+    NetInfo.fetch().then(async state => {
+      if (state.isConnected === true && this.state.usertoken !== null) {
+        let rawResponseScenes = await fetch(
+          'http://calendar.bolshoi.ru:8050/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
         );
-        this.setState({realm});
-      }
-    });
-
-    NetInfo.fetch().then(state => {
-      if (state.isConnected === true) {
+        const content = await rawResponseScenes.json();
+        for (var k = 1; k <= content.GetScenesResult.length; k++) {
+          testArr.push(k);
+        }
+        realm.write(() => {
+          if (realm.objects('Selected').length < 1) {
+            realm.create(
+              'Selected',
+              {selected: JSON.stringify(testArr), id: 1},
+              'modified',
+            );
+            this.setState({realm});
+          }
+        });
         realm.write(() => {
           if (realm.objects('Scene') !== null) {
             realm.delete(realm.objects('Scene'));
@@ -181,7 +179,12 @@ export default class App extends Component {
       }
     });
     NetInfo.fetch().then(async state => {
-      if (state.isConnected === true && realm.objects('EventItem') === null) {
+      if (
+        state.isConnected === true &&
+        //realm.objects('EventItem') === null &&
+        this.state.usertoken !== null
+      ) {
+        var testBody1 = this.state.usertoken;
         let rawResponse = await fetch(
           'http://calendar.bolshoi.ru:8050/GetScenes',
           {
@@ -190,12 +193,12 @@ export default class App extends Component {
               Accept: 'application/json',
               'Content-Type': 'application/json',
             },
-            body: testBody,
+            body: testBody1,
           },
         );
         const contentScenes = await rawResponse.json();
         var testData = [];
-        id = 0;
+        var id = 0;
         // if (realm.objects('EventItem') !== null) {
         //   realm.write(() => {
         //     let allEvents = realm.objects('EventItem');
@@ -205,7 +208,7 @@ export default class App extends Component {
         for (var l = 1; l <= contentScenes.GetScenesResult.length; l++) {
           let rawResponse1 = await fetch(
             'http://calendar.bolshoi.ru:8050/GetEvents/' +
-              content.GetScenesResult[l - 1].ResourceId,
+              contentScenes.GetScenesResult[l - 1].ResourceId,
             {
               method: 'POST',
               headers: {
@@ -243,19 +246,28 @@ export default class App extends Component {
               date: dateFormatted,
             });
             realm.write(() => {
-              realm.create('EventItem', {
-                title: content1.GetEventsResult[p - 1].Title,
-                date: dateFormatted,
-                scene: l,
-                time: eventTime,
-                id: id++,
-              });
+              realm.create(
+                'EventItem',
+                {
+                  title: content1.GetEventsResult[p - 1].Title,
+                  date: dateFormatted,
+                  scene: l,
+                  time: eventTime,
+                  id: id++,
+                },
+                'modified',
+              );
               this.setState({realm});
             });
           }
         }
       }
     });
+  };
+
+  async componentDidMount() {
+    this.getUserPrefs();
+    this.fetchData();
     for (var id = 0; id < realm.objects('EventItem').length; id++) {
       let getId = '99' + id.toString();
       let getBigId = '98' + id.toString();
@@ -324,17 +336,6 @@ export default class App extends Component {
             new Date(utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime]),
             title,
             messageLong,
-          );
-          console.log(
-            new Date(utcDate),
-            new Date(
-              Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
-            ),
-            'big',
-            new Date(utcDate) >
-              new Date(
-                Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
-              ),
           );
         }
       }

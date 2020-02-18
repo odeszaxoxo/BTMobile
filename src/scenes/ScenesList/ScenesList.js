@@ -1,9 +1,10 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {Component} from 'react';
-import {View, Button, AsyncStorage} from 'react-native';
+import {View, AsyncStorage} from 'react-native';
 import SelectMultiple from 'react-native-select-multiple';
 import {isEmpty} from 'lodash';
 import realm from '../../services/realm';
+import {Button} from 'react-native-elements';
 
 class ScenesList extends Component {
   constructor(props) {
@@ -87,7 +88,8 @@ class ScenesList extends Component {
         style={{
           flexDirection: 'column',
           justifyContent: 'space-between',
-          height: '90%',
+          height: '100%',
+          zIndex: 0,
         }}>
         <View>
           <View
@@ -96,19 +98,45 @@ class ScenesList extends Component {
               justifyContent: 'space-around',
               marginTop: 20,
             }}>
-            <Button title="Выбрать все" onPress={this.selectAll} />
-            <Button title="Сброс" onPress={this.reset} />
+            <Button
+              title="Выбрать все"
+              onPress={this.selectAll}
+              buttonStyle={{
+                width: '70%',
+                alignSelf: 'center',
+                marginBottom: 10,
+              }}
+            />
+            <Button
+              title="Сброс"
+              onPress={this.reset}
+              buttonStyle={{
+                width: '70%',
+                alignSelf: 'center',
+                marginBottom: 10,
+              }}
+            />
           </View>
           <SelectMultiple
             items={this.state.scenes}
             selectedItems={this.state.selectedScenes}
             onSelectionsChange={this.onSelectionsChange}
+            style={{zIndex: 0}}
           />
         </View>
         <Button
           onPress={this.goToAgenda}
           title="Выбрать"
           disabled={isEmpty(this.state.selectedScenes) ? true : false}
+          buttonStyle={{
+            position: 'absolute',
+            bottom: 90,
+            right: 20,
+            width: 150,
+            height: 50,
+            zIndex: 1,
+            borderRadius: 50,
+          }}
         />
       </View>
     );

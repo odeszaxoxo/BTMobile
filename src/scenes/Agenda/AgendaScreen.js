@@ -161,7 +161,6 @@ export default class AgendaView extends Component {
       } else {
         arr2 = testArr;
       }
-      console.log(testArr);
       var arr = {};
       var dates = [];
       for (let i = 0; i < realm.objects('EventItem').length; i++) {
@@ -196,7 +195,6 @@ export default class AgendaView extends Component {
         }
       }
       this.setState({eventTest: arr});
-      console.log(realm.objects('Scene'));
     });
   }
 
@@ -230,6 +228,7 @@ export default class AgendaView extends Component {
           rowHasChanged={this.rowHasChanged.bind(this)}
           renderEmptyData={this.renderEmptyData.bind(this)}
           firstDay={1}
+          //theme={{'stylesheet.agenda.list': {container: {paddingBottom: 10}}}}
         />
         <Modal
           animationType="fade"
@@ -396,7 +395,7 @@ const styles = StyleSheet.create({
   },
   back: {
     width: '100%',
-    height: '100%',
+    height: '98%',
     flex: 1,
     backgroundColor: 'transparent',
   },
