@@ -1,21 +1,21 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {View, AsyncStorage, Text} from 'react-native';
+import {View, AsyncStorage, Text, ActivityIndicator} from 'react-native';
 import ReactNativeSettingsPage, {
   SectionRow,
   SwitchRow,
 } from 'react-native-settings-page';
-import {Button, Avatar} from 'react-native-elements';
+import {Button, Avatar, Overlay} from 'react-native-elements';
 import NotificationService from '../../services/NotificationService';
 import NotificationServiceLong from '../../services/NotificationServiceLong';
 import appConfig from '../../../app.json';
 import moment from 'moment';
 import {Item, Picker, Icon} from 'native-base';
+import realm from '../../services/realm';
+import NetInfo from '@react-native-community/netinfo';
 
 const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
 const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
-
-const Realm = require('realm');
 
 export default class SettingsScreen extends React.Component {
   constructor(props) {
@@ -28,7 +28,6 @@ export default class SettingsScreen extends React.Component {
       username: '',
       smallCheck: false,
       bigCheck: false,
-      realm: new Realm(),
       scenes: {
         1: 'Историческая сцена',
         2: 'Новая сцена',
@@ -38,6 +37,7 @@ export default class SettingsScreen extends React.Component {
       },
       selectedShort: undefined,
       selectedLong: undefined,
+      showModal: false,
     };
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -56,8 +56,18 @@ export default class SettingsScreen extends React.Component {
     this.getUserPrefs();
   }
 
+  componentDidMount() {
+    var newDate = new Date();
+    newDate.setMonth(newDate.getMonth() + 3);
+    var lastDate = new Date();
+    lastDate.setMonth(lastDate.getMonth() - 3);
+    var newMomentTime = moment(newDate);
+    var lastMomentTime = moment(lastDate);
+    // eslint-disable-next-line react/no-did-mount-set-state
+    this.setState({startTime: newMomentTime, endTime: lastMomentTime});
+  }
+
   onSmallValueChange = async value => {
-    const {realm} = this.state;
     this.setState({
       selectedShort: value,
     });
@@ -98,7 +108,6 @@ export default class SettingsScreen extends React.Component {
   };
 
   onBigValueChange = async value => {
-    const {realm} = this.state;
     this.setState({
       selectedLong: value,
     });
@@ -159,6 +168,8 @@ export default class SettingsScreen extends React.Component {
     try {
       const name = await AsyncStorage.getItem('user');
       this.setState({username: name});
+      const userToken = JSON.parse(await AsyncStorage.getItem('userToken'));
+      this.setState({userToken: userToken});
       const small = JSON.parse(await AsyncStorage.getItem('smallCheck'));
       this.setState({smallCheck: small});
       const big = JSON.parse(await AsyncStorage.getItem('bigCheck'));
@@ -167,7 +178,7 @@ export default class SettingsScreen extends React.Component {
       this.setState({selectedShort: smallTime});
       const bigTime = await AsyncStorage.getItem('bigTime');
       this.setState({selectedLong: bigTime});
-      return [name, small, big, smallTime, bigTime];
+      return [name, small, big, smallTime, bigTime, userToken];
     } catch (error) {
       console.log(error.message);
     }
@@ -199,7 +210,6 @@ export default class SettingsScreen extends React.Component {
   };
 
   onSmallCheck = async () => {
-    const {realm} = this.state;
     await AsyncStorage.removeItem('smallCheck');
     this.setState({smallCheck: !this.state.smallCheck});
     await AsyncStorage.setItem(
@@ -248,7 +258,6 @@ export default class SettingsScreen extends React.Component {
   };
 
   onBigCheck = async () => {
-    const {realm} = this.state;
     await AsyncStorage.removeItem('bigCheck');
     this.setState({bigCheck: !this.state.bigCheck});
     await AsyncStorage.setItem('bigCheck', JSON.stringify(this.state.bigCheck));
@@ -319,9 +328,186 @@ export default class SettingsScreen extends React.Component {
     console.log(notif);
   }
 
+  fetchData = async testBody => {
+    var testArr = [];
+    await NetInfo.fetch().then(async state => {
+      if (state.isConnected === true && this.state.usertoken !== null) {
+        let rawResponseScenes = await fetch(
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const content = await rawResponseScenes.json();
+        for (var k = 1; k <= content.GetScenesResult.length; k++) {
+          testArr.push(k);
+        }
+        realm.write(() => {
+          if (realm.objects('Selected').length < 1) {
+            realm.create(
+              'Selected',
+              {selected: JSON.stringify(testArr), id: 1},
+              'modified',
+            );
+            this.setState({realm});
+          }
+        });
+        realm.write(() => {
+          if (realm.objects('Scene') !== null) {
+            realm.delete(realm.objects('Scene'));
+            for (var l = 1; l <= content.GetScenesResult.length; l++) {
+              realm.create(
+                'Scene',
+                {
+                  selected: false,
+                  id: l,
+                  title: content.GetScenesResult[l - 1].Name,
+                  color: content.GetScenesResult[l - 1].Color,
+                },
+                'modified',
+              );
+            }
+          } else {
+            for (var l = 1; l <= content.GetScenesResult.length; l++) {
+              realm.create(
+                'Scene',
+                {
+                  selected: false,
+                  id: l,
+                  title: content.GetScenesResult[l - 1].Name,
+                  color: content.GetScenesResult[l - 1].Color,
+                },
+                'modified',
+              );
+            }
+          }
+        });
+        this.setState({realm});
+      }
+    });
+    await NetInfo.fetch().then(async state => {
+      if (
+        state.isConnected === true &&
+        //realm.objects('EventItem') === null &&
+        this.state.usertoken !== null
+      ) {
+        let rawResponse = await fetch(
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const contentScenes = await rawResponse.json();
+        var id = 0;
+        realm.write(() => {
+          let allEvents = realm.objects('EventItem');
+          realm.delete(allEvents);
+        });
+        var scenesArr = [];
+        for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
+          scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
+        }
+        for (var l = 0; l < scenesArr.length; l++) {
+          let urlTest =
+            'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
+            scenesArr[l] +
+            '/' +
+            moment(this.state.endTime).format('YYYY-MM-DDTHH:MM:SS') +
+            '/' +
+            moment(this.state.startTime).format('YYYY-MM-DDTHH:MM:SS');
+          let rawResponse1 = await fetch(urlTest, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          });
+          const content1 = await rawResponse1.json();
+          for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
+            if (
+              content1.GetEventsByPeriodResult[p].StartDateStr !== undefined &&
+              content1.GetEventsByPeriodResult[p].Title !== undefined
+            ) {
+              var beginTime = content1.GetEventsByPeriodResult[
+                p
+              ].StartDateStr.substring(11);
+              var endingTime = content1.GetEventsByPeriodResult[
+                p
+              ].EndDateStr.substring(11);
+              var eventTime = beginTime + ' - ' + endingTime;
+              var date = content1.GetEventsByPeriodResult[
+                p
+              ].StartDateStr.substring(0, 10)
+                .split('.')
+                .join('-');
+              var dateFormatted =
+                date.substring(6) +
+                '-' +
+                date.substring(3).substring(0, 2) +
+                '-' +
+                date.substring(0, 2);
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: l + 1,
+                    time: eventTime,
+                    id: id++,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            }
+          }
+        }
+      }
+    });
+  };
+
+  refresh = async testBody => {
+    this.setState({showModal: true});
+    await this.fetchData(testBody);
+    this.setState({showModal: false});
+  };
+
+  onRefreshClick = async () => {
+    console.log(this.state.userToken);
+    await this.refresh(this.state.userToken);
+    this.props.navigation.navigate('Agenda');
+  };
+
   render() {
     return (
       <ReactNativeSettingsPage>
+        <Overlay
+          isVisible={this.state.showModal}
+          overlayStyle={{
+            width: '80%',
+            height: '10%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <Text style={{alignSelf: 'center'}}>
+            Подождите, идет обновление данных.
+          </Text>
+          <ActivityIndicator size="small" color="#0000ff" />
+        </Overlay>
         <View
           style={{
             flexDirection: 'row',
@@ -451,6 +637,21 @@ export default class SettingsScreen extends React.Component {
               margin: 5,
             }}
             titleStyle={{color: '#42a5f5', fontSize: 16, fontWeight: '700'}}
+          />
+        </SectionRow>
+        <SectionRow text="Обновить данные">
+          <Button
+            title="Обновить все"
+            iconName="refresh"
+            onPress={this.onRefreshClick}
+            buttonStyle={{
+              backgroundColor: 'transparent',
+              borderWidth: 0.5,
+              borderRadius: 6,
+              borderColor: 'red',
+              margin: 5,
+            }}
+            titleStyle={{color: 'red', fontSize: 16, fontWeight: '700'}}
           />
         </SectionRow>
       </ReactNativeSettingsPage>

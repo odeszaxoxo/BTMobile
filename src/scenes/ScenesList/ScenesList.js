@@ -6,6 +6,8 @@ import {isEmpty} from 'lodash';
 import realm from '../../services/realm';
 import {Button} from 'react-native-elements';
 
+var _ = require('lodash');
+
 class ScenesList extends Component {
   constructor(props) {
     super(props);
@@ -25,8 +27,8 @@ class ScenesList extends Component {
     const {navigation} = this.props;
     this.focusListener = navigation.addListener('willFocus', async () => {
       var testArr = await AsyncStorage.getItem('Selected');
-      if (testArr === null) {
-        var arr2 = [];
+      var arr2 = [];
+      if (JSON.parse(testArr) === []) {
         for (let i = 1; i <= realm.objects('Scene').length; i++) {
           arr2.push(i);
         }
@@ -34,10 +36,9 @@ class ScenesList extends Component {
       } else {
         arr2 = testArr;
       }
-      this.setState({selected: arr2});
       var list1 = [];
       for (var x = 0; x < realm.objects('Scene').length; x++) {
-        if (arr2.includes(realm.objects('Scene')[x].id)) {
+        if (JSON.parse(arr2).includes(realm.objects('Scene')[x].id)) {
           var item1 = {
             label: realm.objects('Scene')[x].title,
             value: realm.objects('Scene')[x].id,

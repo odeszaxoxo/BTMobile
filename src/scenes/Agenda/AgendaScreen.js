@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   AsyncStorage,
+  ActivityIndicator,
 } from 'react-native';
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Button} from 'react-native-elements';
@@ -16,6 +17,10 @@ import jsonData from '../../data/data.json';
 import NotificationService from '../../services/NotificationService';
 import appConfig from '../../../app.json';
 import realm from '../../services/realm';
+import NetInfo from '@react-native-community/netinfo';
+import moment from 'moment';
+import {Overlay} from 'react-native-elements';
+import NotificationServiceLong from '../../services/NotificationServiceLong';
 
 var _ = require('lodash');
 
@@ -61,6 +66,9 @@ LocaleConfig.locales.ru = {
   dayNamesShort: ['Вс.', 'Пн.', 'Вт.', 'Ср.', 'Чт.', 'Пт.', 'Сб.'],
 };
 
+const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
+const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
+
 export default class AgendaView extends Component {
   constructor(props) {
     super(props);
@@ -92,11 +100,21 @@ export default class AgendaView extends Component {
       update: 1,
       refresh: false,
       senderId: appConfig.senderID,
+      smallTime: 'key0',
+      bigTime: 'key0',
+      bigCheck: true,
+      smallCheck: true,
+      username: null,
+      showModal: false,
     };
     this.searchButton = this.searchButton.bind(this);
     this.reset = this.reset.bind(this);
     this.setModalVisible = this.setModalVisible.bind(this);
     this.notif = new NotificationService(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
+    this.notifLong = new NotificationServiceLong(
       this.onRegister.bind(this),
       this.onNotif.bind(this),
     );
@@ -107,6 +125,16 @@ export default class AgendaView extends Component {
       title: 'События',
       headerRight: () => (
         <View style={{flexDirection: 'row'}}>
+          <Button
+            onPress={() => this.refreshData()}
+            icon={{
+              name: 'refresh',
+              type: 'material-community',
+              size: 25,
+              color: '#000',
+            }}
+            buttonStyle={{backgroundColor: '#fff'}}
+          />
           <Button
             onPress={() => reset()}
             icon={{
@@ -146,55 +174,344 @@ export default class AgendaView extends Component {
     };
   };
 
+  getUserPrefs = async () => {
+    try {
+      const small = JSON.parse(await AsyncStorage.getItem('smallCheck'));
+      this.setState({smallCheck: small});
+      const big = JSON.parse(await AsyncStorage.getItem('bigCheck'));
+      this.setState({bigCheck: big});
+      const smallTime = await AsyncStorage.getItem('smallTime');
+      this.setState({smallTime: smallTime});
+      const bigTime = await AsyncStorage.getItem('bigTime');
+      this.setState({bigTime: bigTime});
+      const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+      this.setState({usertoken: token});
+      var testArr = JSON.parse(await AsyncStorage.getItem('Selected'));
+      this.setState({selectedCheck: testArr});
+      return [small, big, smallTime, bigTime, token, testArr];
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  fetchData = async () => {
+    const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+    this.setState({usertoken: token});
+    var testBody = this.state.usertoken;
+    var newDate = new Date();
+    newDate.setMonth(newDate.getMonth() + 3);
+    var lastDate = new Date();
+    lastDate.setMonth(lastDate.getMonth() - 3);
+    var newMomentTime = moment(newDate);
+    var lastMomentTime = moment(lastDate);
+    var testArr = [];
+    NetInfo.fetch().then(async state => {
+      if (state.isConnected === true && this.state.usertoken !== null) {
+        let rawResponseScenes = await fetch(
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const content = await rawResponseScenes.json();
+        for (var k = 1; k <= content.GetScenesResult.length; k++) {
+          testArr.push(k);
+        }
+        realm.write(() => {
+          if (realm.objects('Selected').length < 1) {
+            realm.create(
+              'Selected',
+              {selected: JSON.stringify(testArr), id: 1},
+              'modified',
+            );
+            this.setState({realm});
+          }
+        });
+        realm.write(() => {
+          if (realm.objects('Scene') !== null) {
+            realm.delete(realm.objects('Scene'));
+            for (var l = 1; l <= content.GetScenesResult.length; l++) {
+              realm.create(
+                'Scene',
+                {
+                  selected: false,
+                  id: l,
+                  title: content.GetScenesResult[l - 1].Name,
+                  color: content.GetScenesResult[l - 1].Color,
+                },
+                'modified',
+              );
+            }
+          } else {
+            for (var l = 1; l <= content.GetScenesResult.length; l++) {
+              realm.create(
+                'Scene',
+                {
+                  selected: false,
+                  id: l,
+                  title: content.GetScenesResult[l - 1].Name,
+                  color: content.GetScenesResult[l - 1].Color,
+                },
+                'modified',
+              );
+            }
+          }
+        });
+        this.setState({realm});
+      }
+    });
+    NetInfo.fetch().then(async state => {
+      if (
+        state.isConnected === true &&
+        //realm.objects('EventItem') === null &&
+        this.state.usertoken !== null
+      ) {
+        var testBody1 = this.state.usertoken;
+        let rawResponse = await fetch(
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody1,
+          },
+        );
+        const contentScenes = await rawResponse.json();
+        var id = 0;
+        // if (realm.objects('EventItem') !== null) {
+        //   realm.write(() => {
+        //     let allEvents = realm.objects('EventItem');
+        //     realm.delete(allEvents);
+        //   });
+        // }
+        var scenesArr = [];
+        for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
+          scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
+        }
+        for (var l = 0; l < scenesArr.length; l++) {
+          let urlTest =
+            'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
+            scenesArr[l] +
+            '/' +
+            moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
+            '/' +
+            moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
+          let rawResponse1 = await fetch(urlTest, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          });
+          const content1 = await rawResponse1.json();
+          for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
+            if (
+              content1.GetEventsByPeriodResult[p].StartDateStr !== undefined &&
+              content1.GetEventsByPeriodResult[p].Title !== undefined
+            ) {
+              var beginTime = content1.GetEventsByPeriodResult[
+                p
+              ].StartDateStr.substring(11);
+              var endingTime = content1.GetEventsByPeriodResult[
+                p
+              ].EndDateStr.substring(11);
+              var eventTime = beginTime + ' - ' + endingTime;
+              var date = content1.GetEventsByPeriodResult[
+                p
+              ].StartDateStr.substring(0, 10)
+                .split('.')
+                .join('-');
+              var dateFormatted =
+                date.substring(6) +
+                '-' +
+                date.substring(3).substring(0, 2) +
+                '-' +
+                date.substring(0, 2);
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: l + 1,
+                    time: eventTime,
+                    id: id++,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            }
+          }
+        }
+      }
+    });
+  };
+
+  formatter = async () => {
+    var testArr = await AsyncStorage.getItem('Selected');
+    this.setState({selectedScenes: testArr});
+    console.log(testArr);
+    if (JSON.parse(testArr) === null) {
+      var arr2 = [];
+      for (let i = 1; i <= realm.objects('Scene').length; i++) {
+        arr2.push(i);
+      }
+      await AsyncStorage.setItem('Selected', JSON.stringify(arr2));
+    } else {
+      arr2 = JSON.parse(testArr);
+    }
+    var arr = {};
+    var dates = [];
+    for (let i = 0; i < realm.objects('EventItem').length; i++) {
+      dates.push(realm.objects('EventItem')[i].date);
+      var arr3 = _.uniq(dates);
+    }
+    for (let j = 0; j < arr3.length; j++) {
+      var test1 = [];
+      for (
+        let x = 0;
+        x <
+        realm.objects('EventItem').filtered('date CONTAINS[c] $0', arr3[j])
+          .length;
+        x++
+      ) {
+        if (
+          arr2.includes(
+            realm.objects('EventItem').filtered('date CONTAINS[c] $0', arr3[j])[
+              x
+            ].scene,
+          )
+        ) {
+          let container = realm
+            .objects('EventItem')
+            .filtered('date CONTAINS[c] $0', arr3[j])[x];
+          test1.push(container);
+        }
+      }
+      if (_.isEmpty(test1)) {
+      } else {
+        arr[arr3[j]] = _.orderBy(test1, 'time', 'asc');
+      }
+    }
+    this.setState({eventTest: arr});
+    this.setState({selectedScenes: testArr});
+  };
+
+  refreshData = async () => {
+    await this.fetchData();
+    await this.formatter();
+    console.log('refreshed');
+  };
+
+  setNotifications = () => {
+    // console.log('start setting');
+    // let evs = realm.objects('EventItem');
+    // var firstDate = new Date();
+    // firstDate.setMonth(firstDate.getDay() + 1);
+    // var lastDate = new Date();
+    // var newMomentTime = moment(firstDate);
+    // var lastMomentTime = moment(lastDate);
+    // let filteredByDay = evs.filtered('date > $0 AND date < $1', moment(lastDate).format('YYYY-MM-DDTHH:MM:SS'), moment(firstDate).format('YYYY-MM-DDTHH:MM:SS'));
+    // console.log(filteredByDay);
+    // if (realm.objects('EventItem').length > 0) {
+    //   for (var id = 0; id < realm.objects('EventItem').length; id++) {
+    //     let getId = '99' + id.toString();
+    //     let getBigId = '98' + id.toString();
+    //     this.notif.cancelNotif(getId);
+    //     this.notif.cancelNotif({id: getId});
+    //     this.notifLong.cancelNotif(getBigId);
+    //     this.notifLong.cancelNotif({id: getBigId});
+    //     let result = realm.objects('EventItem')[id].time;
+    //     let date = realm.objects('EventItem')[id].date;
+    //     let startTime = date + ' ' + result.substring(0, 5) + ':00';
+    //     let momentDate = moment(startTime);
+    //     let datee = new Date(momentDate.toDate());
+    //     let utcDate = moment.utc(datee);
+    //     let title =
+    //       this.state.scenes[realm.objects('EventItem')[id].scene] +
+    //       '.' +
+    //       ' Соб./Через';
+    //     let message =
+    //       realm.objects('EventItem')[id].title +
+    //       ' / ' +
+    //       smallItems[this.state.smallTime] +
+    //       ' минут.';
+    //     if (bigItems[this.state.bigTime] === 1) {
+    //       var messageLong =
+    //         realm.objects('EventItem')[id].title +
+    //         ' / ' +
+    //         bigItems[this.state.bigTime] +
+    //         ' час.';
+    //     } else {
+    //       var arr = [2, 3, 4];
+    //       if (arr.includes(bigItems[this.state.bigTime])) {
+    //         var messageLong =
+    //           realm.objects('EventItem')[id].title +
+    //           ' / ' +
+    //           bigItems[this.state.bigTime] +
+    //           ' часа';
+    //       } else {
+    //         var messageLong =
+    //           realm.objects('EventItem')[id].title +
+    //           ' / ' +
+    //           bigItems[this.state.bigTime] +
+    //           ' часов.';
+    //       }
+    //     }
+    //     if (
+    //       new Date(utcDate) >
+    //         new Date(
+    //           Date.now() + 60 * 1000 * smallItems[this.state.smallTime],
+    //         ) &&
+    //       new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
+    //     ) {
+    //       if (this.state.smallCheck === true) {
+    //         this.notif.scheduleNotif(
+    //           new Date(utcDate - 60 * 1000 * smallItems[this.state.smallTime]),
+    //           title,
+    //           message,
+    //         );
+    //         console.log('small notif');
+    //       }
+    //     }
+    //     if (
+    //       new Date(utcDate) >
+    //         new Date(
+    //           Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
+    //         ) &&
+    //       new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
+    //     ) {
+    //       if (this.state.bigCheck === true) {
+    //         this.notifLong.scheduleNotif(
+    //           new Date(utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime]),
+    //           title,
+    //           messageLong,
+    //         );
+    //         console.log('big notif');
+    //       }
+    //     }
+    //   }
+    // }
+  };
+
   async componentDidMount() {
     this.props.navigation.setParams({
       reset: this.reset.bind(this),
     });
+    this.setNotifications();
     this.props.navigation.addListener('didFocus', async () => {
-      var testArr = await AsyncStorage.getItem('Selected');
-      if (testArr === null) {
-        var arr2 = [];
-        for (let i = 1; i <= realm.objects('Scene').length; i++) {
-          arr2.push(i);
-        }
-        await AsyncStorage.setItem('Selected', JSON.stringify(arr2));
-      } else {
-        arr2 = testArr;
-      }
-      var arr = {};
-      var dates = [];
-      for (let i = 0; i < realm.objects('EventItem').length; i++) {
-        dates.push(realm.objects('EventItem')[i].date);
-        var arr3 = _.uniq(dates);
-      }
-      for (let j = 0; j < arr3.length; j++) {
-        var test1 = [];
-        for (
-          let x = 0;
-          x <
-          realm.objects('EventItem').filtered('date CONTAINS[c] $0', arr3[j])
-            .length;
-          x++
-        ) {
-          if (
-            arr2.includes(
-              realm
-                .objects('EventItem')
-                .filtered('date CONTAINS[c] $0', arr3[j])[x].scene,
-            )
-          ) {
-            let container = realm
-              .objects('EventItem')
-              .filtered('date CONTAINS[c] $0', arr3[j])[x];
-            test1.push(container);
-          }
-        }
-        if (_.isEmpty(test1)) {
-        } else {
-          arr[arr3[j]] = _.orderBy(test1, 'time', 'asc');
-        }
-      }
-      this.setState({eventTest: arr});
+      this.setState({showModal: true});
+      await this.formatter();
+      this.setState({showModal: false});
     });
   }
 
@@ -217,6 +534,21 @@ export default class AgendaView extends Component {
     LocaleConfig.defaultLocale = 'ru';
     return (
       <View style={[styles.back]}>
+        <Overlay
+          isVisible={this.state.showModal}
+          overlayStyle={{
+            width: '80%',
+            height: '10%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <Text style={{alignSelf: 'center'}}>
+            Подождите, идет форматирование данных.
+          </Text>
+          <ActivityIndicator size="small" color="#0000ff" />
+        </Overlay>
         <Agenda
           ref={agenda => {
             this.agenda = agenda;
@@ -229,6 +561,7 @@ export default class AgendaView extends Component {
           renderEmptyData={this.renderEmptyData.bind(this)}
           firstDay={1}
           //theme={{'stylesheet.agenda.list': {container: {paddingBottom: 10}}}}
+          //onRefresh={() => this.refreshData()}
         />
         <Modal
           animationType="fade"
