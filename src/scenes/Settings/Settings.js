@@ -58,9 +58,9 @@ export default class SettingsScreen extends React.Component {
 
   componentDidMount() {
     var newDate = new Date();
-    newDate.setMonth(newDate.getMonth() + 3);
+    newDate.setMonth(newDate.getMonth() + 1);
     var lastDate = new Date();
-    lastDate.setMonth(lastDate.getMonth() - 3);
+    lastDate.setMonth(lastDate.getMonth() - 1);
     var newMomentTime = moment(newDate);
     var lastMomentTime = moment(lastDate);
     // eslint-disable-next-line react/no-did-mount-set-state
@@ -197,7 +197,6 @@ export default class SettingsScreen extends React.Component {
   };
 
   _send = () => {
-    console.log('notification');
     let title = 'Тестовое уведомление';
     let message = 'Событие начнется через 30 секунд';
     let messageLong = 'Событие начнется через час';
@@ -409,10 +408,12 @@ export default class SettingsScreen extends React.Component {
         );
         const contentScenes = await rawResponse.json();
         var id = 0;
-        realm.write(() => {
-          let allEvents = realm.objects('EventItem');
-          realm.delete(allEvents);
-        });
+        // if (realm.objects('EventItem') !== null) {
+        //   realm.write(() => {
+        //     let allEvents = realm.objects('EventItem');
+        //     realm.delete(allEvents);
+        //   });
+        // }
         var scenesArr = [];
         for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
@@ -439,24 +440,31 @@ export default class SettingsScreen extends React.Component {
               content1.GetEventsByPeriodResult[p].StartDateStr !== undefined &&
               content1.GetEventsByPeriodResult[p].Title !== undefined
             ) {
-              var beginTime = content1.GetEventsByPeriodResult[
+              let beginTime = content1.GetEventsByPeriodResult[
                 p
               ].StartDateStr.substring(11);
-              var endingTime = content1.GetEventsByPeriodResult[
+              let endingTime = content1.GetEventsByPeriodResult[
                 p
               ].EndDateStr.substring(11);
-              var eventTime = beginTime + ' - ' + endingTime;
-              var date = content1.GetEventsByPeriodResult[
+              let eventTime = beginTime + ' - ' + endingTime;
+              let date = content1.GetEventsByPeriodResult[
                 p
               ].StartDateStr.substring(0, 10)
                 .split('.')
                 .join('-');
-              var dateFormatted =
+              let dateFormatted =
                 date.substring(6) +
                 '-' +
                 date.substring(3).substring(0, 2) +
                 '-' +
                 date.substring(0, 2);
+              let alertedPersons =
+                content1.GetEventsByPeriodResult[p].AlertedPersons;
+              let troups = content1.GetEventsByPeriodResult[p].Troups;
+              let outer = content1.GetEventsByPeriodResult[p].OuterPersons;
+              let required =
+                content1.GetEventsByPeriodResult[p].RequiredPersons;
+              var conductor = content1.GetEventsByPeriodResult[p].Conductor;
               realm.write(() => {
                 realm.create(
                   'EventItem',
@@ -465,6 +473,11 @@ export default class SettingsScreen extends React.Component {
                     date: dateFormatted,
                     scene: l + 1,
                     time: eventTime,
+                    alerted: alertedPersons,
+                    outer: outer,
+                    troups: troups,
+                    required: required,
+                    conductor: conductor,
                     id: id++,
                   },
                   'modified',
@@ -485,7 +498,6 @@ export default class SettingsScreen extends React.Component {
   };
 
   onRefreshClick = async () => {
-    console.log(this.state.userToken);
     await this.refresh(this.state.userToken);
     this.props.navigation.navigate('Agenda');
   };

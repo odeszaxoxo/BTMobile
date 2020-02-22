@@ -10,16 +10,9 @@ import Scenes from './src/scenes/ScenesList/ScenesList';
 import AgendaScreen from './src/scenes/Agenda/AgendaScreen';
 import Settings from './src/scenes/Settings/Settings';
 import jsonData from './src/data/data1.json';
-import moment from 'moment';
 import NotificationService from './src/services/NotificationService';
 import NotificationServiceLong from './src/services/NotificationServiceLong';
 import appConfig from './app.json';
-import realm from './src/services/realm';
-
-//var _ = require('lodash');
-
-const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
-const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
 
 const AppStack = createStackNavigator({
   Agenda: AgendaScreen,

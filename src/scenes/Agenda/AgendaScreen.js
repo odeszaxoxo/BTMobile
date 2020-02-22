@@ -21,6 +21,7 @@ import NetInfo from '@react-native-community/netinfo';
 import moment from 'moment';
 import {Overlay} from 'react-native-elements';
 import NotificationServiceLong from '../../services/NotificationServiceLong';
+import DatePicker from 'react-native-datepicker';
 
 var _ = require('lodash');
 
@@ -106,9 +107,13 @@ export default class AgendaView extends Component {
       smallCheck: true,
       username: null,
       showModal: false,
+      showPicker: false,
+      date: '2016-05-15',
+      registered: [],
     };
     this.searchButton = this.searchButton.bind(this);
     this.reset = this.reset.bind(this);
+    this.show = this.show.bind(this);
     this.setModalVisible = this.setModalVisible.bind(this);
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -121,12 +126,13 @@ export default class AgendaView extends Component {
   }
   static navigationOptions = ({navigation}) => {
     const reset = navigation.getParam('reset', () => {});
+    const show = navigation.getParam('show', () => {});
     return {
       title: 'События',
       headerRight: () => (
         <View style={{flexDirection: 'row'}}>
           <Button
-            onPress={() => this.refreshData()}
+            onPress={() => reset()}
             icon={{
               name: 'refresh',
               type: 'material-community',
@@ -136,7 +142,7 @@ export default class AgendaView extends Component {
             buttonStyle={{backgroundColor: '#fff'}}
           />
           <Button
-            onPress={() => reset()}
+            onPress={() => show()}
             icon={{
               name: 'calendar-today',
               type: 'material-community',
@@ -359,7 +365,6 @@ export default class AgendaView extends Component {
   formatter = async () => {
     var testArr = await AsyncStorage.getItem('Selected');
     this.setState({selectedScenes: testArr});
-    console.log(testArr);
     if (JSON.parse(testArr) === null) {
       var arr2 = [];
       for (let i = 1; i <= realm.objects('Scene').length; i++) {
@@ -412,95 +417,103 @@ export default class AgendaView extends Component {
     console.log('refreshed');
   };
 
-  setNotifications = () => {
-    // console.log('start setting');
-    // let evs = realm.objects('EventItem');
-    // var firstDate = new Date();
-    // firstDate.setMonth(firstDate.getDay() + 1);
-    // var lastDate = new Date();
-    // var newMomentTime = moment(firstDate);
-    // var lastMomentTime = moment(lastDate);
-    // let filteredByDay = evs.filtered('date > $0 AND date < $1', moment(lastDate).format('YYYY-MM-DDTHH:MM:SS'), moment(firstDate).format('YYYY-MM-DDTHH:MM:SS'));
-    // console.log(filteredByDay);
-    // if (realm.objects('EventItem').length > 0) {
-    //   for (var id = 0; id < realm.objects('EventItem').length; id++) {
-    //     let getId = '99' + id.toString();
-    //     let getBigId = '98' + id.toString();
-    //     this.notif.cancelNotif(getId);
-    //     this.notif.cancelNotif({id: getId});
-    //     this.notifLong.cancelNotif(getBigId);
-    //     this.notifLong.cancelNotif({id: getBigId});
-    //     let result = realm.objects('EventItem')[id].time;
-    //     let date = realm.objects('EventItem')[id].date;
-    //     let startTime = date + ' ' + result.substring(0, 5) + ':00';
-    //     let momentDate = moment(startTime);
-    //     let datee = new Date(momentDate.toDate());
-    //     let utcDate = moment.utc(datee);
-    //     let title =
-    //       this.state.scenes[realm.objects('EventItem')[id].scene] +
-    //       '.' +
-    //       ' Соб./Через';
-    //     let message =
-    //       realm.objects('EventItem')[id].title +
-    //       ' / ' +
-    //       smallItems[this.state.smallTime] +
-    //       ' минут.';
-    //     if (bigItems[this.state.bigTime] === 1) {
-    //       var messageLong =
-    //         realm.objects('EventItem')[id].title +
-    //         ' / ' +
-    //         bigItems[this.state.bigTime] +
-    //         ' час.';
-    //     } else {
-    //       var arr = [2, 3, 4];
-    //       if (arr.includes(bigItems[this.state.bigTime])) {
-    //         var messageLong =
-    //           realm.objects('EventItem')[id].title +
-    //           ' / ' +
-    //           bigItems[this.state.bigTime] +
-    //           ' часа';
-    //       } else {
-    //         var messageLong =
-    //           realm.objects('EventItem')[id].title +
-    //           ' / ' +
-    //           bigItems[this.state.bigTime] +
-    //           ' часов.';
-    //       }
-    //     }
-    //     if (
-    //       new Date(utcDate) >
-    //         new Date(
-    //           Date.now() + 60 * 1000 * smallItems[this.state.smallTime],
-    //         ) &&
-    //       new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
-    //     ) {
-    //       if (this.state.smallCheck === true) {
-    //         this.notif.scheduleNotif(
-    //           new Date(utcDate - 60 * 1000 * smallItems[this.state.smallTime]),
-    //           title,
-    //           message,
-    //         );
-    //         console.log('small notif');
-    //       }
-    //     }
-    //     if (
-    //       new Date(utcDate) >
-    //         new Date(
-    //           Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
-    //         ) &&
-    //       new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
-    //     ) {
-    //       if (this.state.bigCheck === true) {
-    //         this.notifLong.scheduleNotif(
-    //           new Date(utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime]),
-    //           title,
-    //           messageLong,
-    //         );
-    //         console.log('big notif');
-    //       }
-    //     }
-    //   }
-    // }
+  setNotifications = async () => {
+    var firstDate = new Date();
+    var newMomentTime = moment(firstDate, 'YYYY-MM-DD');
+    var lastMomentTime = moment(firstDate, 'YYYY-MM-DD').add(1, 'days');
+    for (let i = 0; i < realm.objects('EventItem').length; i++) {
+      let getId = '99' + i.toString();
+      let getBigId = '98' + i.toString();
+      this.notif.cancelNotif(getId);
+      this.notif.cancelNotif({id: getId});
+      this.notifLong.cancelNotif(getBigId);
+      this.notifLong.cancelNotif({id: getBigId});
+    }
+    var registered = [];
+    if (realm.objects('EventItem').length > 0) {
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        if (
+          realm.objects('EventItem')[id].date <=
+            lastMomentTime.format('YYYY-MM-DD') &&
+          realm.objects('EventItem')[id].date >=
+            newMomentTime.format('YYYY-MM-DD')
+        ) {
+          registered.push(id);
+          let result = realm.objects('EventItem')[id].time;
+          let date = realm.objects('EventItem')[id].date;
+          let startTime = date + ' ' + result.substring(0, 5) + ':00';
+          let momentDate = moment(startTime);
+          let datee = new Date(momentDate.toDate());
+          let utcDate = moment.utc(datee);
+          let title =
+            this.state.scenes[realm.objects('EventItem')[id].scene] +
+            '.' +
+            ' Соб./Через';
+          let message =
+            realm.objects('EventItem')[id].title +
+            ' / ' +
+            smallItems[this.state.smallTime] +
+            ' минут.';
+          if (bigItems[this.state.bigTime] === 1) {
+            var messageLong =
+              realm.objects('EventItem')[id].title +
+              ' / ' +
+              bigItems[this.state.bigTime] +
+              ' час.';
+          } else {
+            var arr = [2, 3, 4];
+            if (arr.includes(bigItems[this.state.bigTime])) {
+              var messageLong =
+                realm.objects('EventItem')[id].title +
+                ' / ' +
+                bigItems[this.state.bigTime] +
+                ' часа';
+            } else {
+              var messageLong =
+                realm.objects('EventItem')[id].title +
+                ' / ' +
+                bigItems[this.state.bigTime] +
+                ' часов.';
+            }
+          }
+          if (
+            new Date(utcDate) >
+              new Date(
+                Date.now() + 60 * 1000 * smallItems[this.state.smallTime],
+              ) &&
+            new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
+          ) {
+            if (this.state.smallCheck === true) {
+              this.notif.scheduleNotif(
+                new Date(
+                  utcDate - 60 * 1000 * smallItems[this.state.smallTime],
+                ),
+                title,
+                message,
+              );
+            }
+          }
+          if (
+            new Date(utcDate) >
+              new Date(
+                Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
+              ) &&
+            new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
+          ) {
+            if (this.state.bigCheck === true) {
+              this.notifLong.scheduleNotif(
+                new Date(
+                  utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime],
+                ),
+                title,
+                messageLong,
+              );
+            }
+          }
+        }
+      }
+      this.setState({registered: registered});
+    }
   };
 
   async componentDidMount() {
@@ -549,6 +562,71 @@ export default class AgendaView extends Component {
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
+        <Overlay
+          isVisible={this.state.showPicker}
+          overlayStyle={{
+            width: '80%',
+            height: '10%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <View>
+            <DatePicker
+              style={{width: 200}}
+              date={this.state.date}
+              mode="date"
+              placeholder="select date"
+              format="YYYY-MM-DD"
+              minDate="2016-05-01"
+              maxDate="2016-06-01"
+              confirmBtnText="Confirm"
+              cancelBtnText="Cancel"
+              customStyles={{
+                dateIcon: {
+                  position: 'absolute',
+                  left: 0,
+                  top: 4,
+                  marginLeft: 0,
+                },
+                dateInput: {
+                  marginLeft: 36,
+                },
+                // ... You can check the source to find the other keys.
+              }}
+              onDateChange={date => {
+                this.setState({date: date});
+              }}
+            />
+            <DatePicker
+              style={{width: 200}}
+              date={this.state.date}
+              mode="date"
+              placeholder="select date"
+              format="YYYY-MM-DD"
+              minDate="2016-05-01"
+              maxDate="2016-06-01"
+              confirmBtnText="Confirm"
+              cancelBtnText="Cancel"
+              customStyles={{
+                dateIcon: {
+                  position: 'absolute',
+                  left: 0,
+                  top: 4,
+                  marginLeft: 0,
+                },
+                dateInput: {
+                  marginLeft: 36,
+                },
+                // ... You can check the source to find the other keys.
+              }}
+              onDateChange={date => {
+                this.setState({date: date});
+              }}
+            />
+          </View>
+        </Overlay>
         <Agenda
           ref={agenda => {
             this.agenda = agenda;
@@ -561,7 +639,7 @@ export default class AgendaView extends Component {
           renderEmptyData={this.renderEmptyData.bind(this)}
           firstDay={1}
           //theme={{'stylesheet.agenda.list': {container: {paddingBottom: 10}}}}
-          //onRefresh={() => this.refreshData()}
+          //onRefresh={() => console.log('refresh')}
         />
         <Modal
           animationType="fade"
@@ -612,6 +690,21 @@ export default class AgendaView extends Component {
                 <Text style={{fontSize: 18, marginBottom: 15}}>
                   Сцена : {this.state.selectedScene}
                 </Text>
+                <Text style={{fontSize: 18, marginBottom: 15}}>
+                  Дирижер : {this.state.selectedConductor}
+                </Text>
+                <Text style={{fontSize: 18, marginBottom: 15}}>
+                  Труппы : {this.state.selectedTroups}
+                </Text>
+                <Text style={{fontSize: 18, marginBottom: 15}}>
+                  Оповещаемые : {this.state.selectedAlerted}
+                </Text>
+                <Text style={{fontSize: 18, marginBottom: 15}}>
+                  Внещние участники : {this.state.selectedOuter}
+                </Text>
+                <Text style={{fontSize: 18, marginBottom: 15}}>
+                  Обязательные участники : {this.state.selectedRequired}
+                </Text>
               </View>
               <TouchableHighlight
                 onPress={() => {
@@ -638,6 +731,10 @@ export default class AgendaView extends Component {
     this.agenda.chooseDay(today);
   };
 
+  show = () => {
+    this.setState({showPicker: true});
+  };
+
   setModalVisible(visible) {
     this.setState({modalVisible: visible});
   }
@@ -652,6 +749,11 @@ export default class AgendaView extends Component {
             selectedTime: item.time,
             selectedScene: sceneName,
             selectedText: item.title,
+            selectedAlerted: item.alerted !== '' ? item.alerted : 'Нет',
+            selectedOuter: item.outer !== '' ? item.outer : 'Нет',
+            selectedTroups: item.troups !== '' ? item.troups : 'Нет',
+            selectedRequired: item.required !== '' ? item.required : 'Нет',
+            selectedConductor: item.conductor !== '' ? item.conductor : 'Нет',
           });
         }}>
         <View style={[styles.item, {height: item.height}]}>
