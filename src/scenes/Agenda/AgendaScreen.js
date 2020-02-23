@@ -21,7 +21,6 @@ import NetInfo from '@react-native-community/netinfo';
 import moment from 'moment';
 import {Overlay} from 'react-native-elements';
 import NotificationServiceLong from '../../services/NotificationServiceLong';
-import DatePicker from 'react-native-datepicker';
 
 var _ = require('lodash');
 
@@ -79,20 +78,8 @@ export default class AgendaView extends Component {
       evs: {},
       selectedDate: new Date(),
       selectedScenes: [],
-      scenes: {
-        1: 'Историческая сцена',
-        2: 'Новая сцена',
-        3: 'Бетховенский зал',
-        4: 'Верхняя сцена',
-        5: 'Балетный зал',
-      },
-      scenesColor: {
-        1: '#80d6ff',
-        2: '#64d8cb',
-        3: '#c49000',
-        4: '#ff7d47',
-        5: '#795548',
-      },
+      startDate: undefined,
+      endDate: undefined,
       modalVisible: false,
       selectedTime: '',
       selectedText: '',
@@ -107,8 +94,6 @@ export default class AgendaView extends Component {
       smallCheck: true,
       username: null,
       showModal: false,
-      showPicker: false,
-      date: '2016-05-15',
       registered: [],
     };
     this.searchButton = this.searchButton.bind(this);
@@ -126,7 +111,6 @@ export default class AgendaView extends Component {
   }
   static navigationOptions = ({navigation}) => {
     const reset = navigation.getParam('reset', () => {});
-    const show = navigation.getParam('show', () => {});
     return {
       title: 'События',
       headerRight: () => (
@@ -142,7 +126,7 @@ export default class AgendaView extends Component {
             buttonStyle={{backgroundColor: '#fff'}}
           />
           <Button
-            onPress={() => show()}
+            onPress={() => navigation.navigate('Datepicker')}
             icon={{
               name: 'calendar-today',
               type: 'material-community',
@@ -364,6 +348,11 @@ export default class AgendaView extends Component {
 
   formatter = async () => {
     var testArr = await AsyncStorage.getItem('Selected');
+    var startDate = await AsyncStorage.getItem('SelectedStartDate');
+    var endDate = await AsyncStorage.getItem('SelectedEndDate');
+    if (startDate !== null && endDate !== null) {
+      this.setState({startDate: startDate, endDate: endDate});
+    }
     this.setState({selectedScenes: testArr});
     if (JSON.parse(testArr) === null) {
       var arr2 = [];
@@ -446,7 +435,7 @@ export default class AgendaView extends Component {
           let datee = new Date(momentDate.toDate());
           let utcDate = moment.utc(datee);
           let title =
-            this.state.scenes[realm.objects('EventItem')[id].scene] +
+            realm.objects('Scene')[realm.objects('EventItem')[id].scene].title +
             '.' +
             ' Соб./Через';
           let message =
@@ -562,71 +551,6 @@ export default class AgendaView extends Component {
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
-        <Overlay
-          isVisible={this.state.showPicker}
-          overlayStyle={{
-            width: '80%',
-            height: '10%',
-            alignSelf: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-around',
-          }}>
-          <View>
-            <DatePicker
-              style={{width: 200}}
-              date={this.state.date}
-              mode="date"
-              placeholder="select date"
-              format="YYYY-MM-DD"
-              minDate="2016-05-01"
-              maxDate="2016-06-01"
-              confirmBtnText="Confirm"
-              cancelBtnText="Cancel"
-              customStyles={{
-                dateIcon: {
-                  position: 'absolute',
-                  left: 0,
-                  top: 4,
-                  marginLeft: 0,
-                },
-                dateInput: {
-                  marginLeft: 36,
-                },
-                // ... You can check the source to find the other keys.
-              }}
-              onDateChange={date => {
-                this.setState({date: date});
-              }}
-            />
-            <DatePicker
-              style={{width: 200}}
-              date={this.state.date}
-              mode="date"
-              placeholder="select date"
-              format="YYYY-MM-DD"
-              minDate="2016-05-01"
-              maxDate="2016-06-01"
-              confirmBtnText="Confirm"
-              cancelBtnText="Cancel"
-              customStyles={{
-                dateIcon: {
-                  position: 'absolute',
-                  left: 0,
-                  top: 4,
-                  marginLeft: 0,
-                },
-                dateInput: {
-                  marginLeft: 36,
-                },
-                // ... You can check the source to find the other keys.
-              }}
-              onDateChange={date => {
-                this.setState({date: date});
-              }}
-            />
-          </View>
-        </Overlay>
         <Agenda
           ref={agenda => {
             this.agenda = agenda;
@@ -638,6 +562,8 @@ export default class AgendaView extends Component {
           rowHasChanged={this.rowHasChanged.bind(this)}
           renderEmptyData={this.renderEmptyData.bind(this)}
           firstDay={1}
+          minDate={this.state.startDate}
+          maxDate={this.state.endDate}
           //theme={{'stylesheet.agenda.list': {container: {paddingBottom: 10}}}}
           //onRefresh={() => console.log('refresh')}
         />
@@ -726,7 +652,10 @@ export default class AgendaView extends Component {
     );
   }
 
-  reset = () => {
+  reset = async () => {
+    await AsyncStorage.removeItem('SelectedStartDate');
+    await AsyncStorage.removeItem('SelectedEndDate');
+    this.setState({startDate: undefined, endDate: undefined});
     const today = new Date();
     this.agenda.chooseDay(today);
   };

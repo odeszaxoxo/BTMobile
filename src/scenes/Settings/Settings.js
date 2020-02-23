@@ -13,6 +13,7 @@ import moment from 'moment';
 import {Item, Picker, Icon} from 'native-base';
 import realm from '../../services/realm';
 import NetInfo from '@react-native-community/netinfo';
+import DatePicker from 'react-native-datepicker';
 
 const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
 const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
@@ -38,6 +39,8 @@ export default class SettingsScreen extends React.Component {
       selectedShort: undefined,
       selectedLong: undefined,
       showModal: false,
+      startDate: new Date(new Date().getTime() - 24 * 60 * 60 * 1000 * 30 * 3),
+      endDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000 * 30 * 3),
     };
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -54,17 +57,6 @@ export default class SettingsScreen extends React.Component {
 
   UNSAFE_componentWillMount() {
     this.getUserPrefs();
-  }
-
-  componentDidMount() {
-    var newDate = new Date();
-    newDate.setMonth(newDate.getMonth() + 1);
-    var lastDate = new Date();
-    lastDate.setMonth(lastDate.getMonth() - 1);
-    var newMomentTime = moment(newDate);
-    var lastMomentTime = moment(lastDate);
-    // eslint-disable-next-line react/no-did-mount-set-state
-    this.setState({startTime: newMomentTime, endTime: lastMomentTime});
   }
 
   onSmallValueChange = async value => {
@@ -423,9 +415,9 @@ export default class SettingsScreen extends React.Component {
             'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
             scenesArr[l] +
             '/' +
-            moment(this.state.endTime).format('YYYY-MM-DDTHH:MM:SS') +
+            moment(this.state.startDate).format('YYYY-MM-DDTHH:MM:SS') +
             '/' +
-            moment(this.state.startTime).format('YYYY-MM-DDTHH:MM:SS');
+            moment(this.state.endDate).format('YYYY-MM-DDTHH:MM:SS');
           let rawResponse1 = await fetch(urlTest, {
             method: 'POST',
             headers: {
@@ -651,11 +643,80 @@ export default class SettingsScreen extends React.Component {
             titleStyle={{color: '#42a5f5', fontSize: 16, fontWeight: '700'}}
           />
         </SectionRow>
-        <SectionRow text="Обновить данные">
+        <SectionRow text="Обновить данные за выбранный период времени">
+          <Text style={{marginLeft: 15, marginRight: 15, marginBottom: 15}}>
+            Это может занять много времени, в зависимости от выбранного Вами
+            промежутка дат.
+          </Text>
+          <View
+            style={{
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              zIndex: 0,
+            }}>
+            <View>
+              <Text style={{marginBottom: 10, marginLeft: 5, fontSize: 14}}>
+                Обновить с :
+              </Text>
+              <DatePicker
+                style={{width: '95%', marginTop: 10, marginBottom: 10}}
+                date={this.state.startDate}
+                mode="date"
+                placeholder="select date"
+                format="YYYY-MM-DD"
+                confirmBtnText="Confirm"
+                cancelBtnText="Cancel"
+                customStyles={{
+                  dateIcon: {
+                    position: 'absolute',
+                    left: 0,
+                    top: 4,
+                    marginLeft: 0,
+                  },
+                  dateInput: {
+                    marginLeft: 36,
+                  },
+                  // ... You can check the source to find the other keys.
+                }}
+                onDateChange={date => {
+                  this.setState({startDate: date});
+                }}
+              />
+            </View>
+            <View>
+              <Text style={{marginBottom: 0, marginLeft: 5, fontSize: 14}}>
+                по :
+              </Text>
+              <DatePicker
+                style={{width: '95%', marginTop: 10, marginBottom: 10}}
+                date={this.state.endDate}
+                mode="date"
+                placeholder="select date"
+                format="YYYY-MM-DD"
+                confirmBtnText="Confirm"
+                cancelBtnText="Cancel"
+                customStyles={{
+                  dateIcon: {
+                    position: 'absolute',
+                    left: 0,
+                    top: 4,
+                    marginLeft: 0,
+                  },
+                  dateInput: {
+                    marginLeft: 36,
+                  },
+                  // ... You can check the source to find the other keys.
+                }}
+                onDateChange={date => {
+                  this.setState({endDate: date});
+                }}
+              />
+            </View>
+          </View>
           <Button
             title="Обновить все"
             iconName="refresh"
-            onPress={this.onRefreshClick}
+            onPress={this.fetchData}
             buttonStyle={{
               backgroundColor: 'transparent',
               borderWidth: 0.5,

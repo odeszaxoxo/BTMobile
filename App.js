@@ -13,11 +13,13 @@ import jsonData from './src/data/data1.json';
 import NotificationService from './src/services/NotificationService';
 import NotificationServiceLong from './src/services/NotificationServiceLong';
 import appConfig from './app.json';
+import Datepicker from './src/scenes/Datepicker/Datepicker';
 
 const AppStack = createStackNavigator({
   Agenda: AgendaScreen,
   Scenes: Scenes,
   Settings: Settings,
+  Datepicker: Datepicker,
 });
 
 const AuthStack = createStackNavigator(
