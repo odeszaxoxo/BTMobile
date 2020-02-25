@@ -519,7 +519,13 @@ export default class AgendaView extends Component {
     await this.getModifiedEvents();
     await this.getDeletedEvents();
     await this.setNotifications();
+    await this.formatData();
+  };
+
+  formatData = async () => {
+    this.setState({showModal: true});
     await this.formatter();
+    this.setState({showModal: false});
   };
 
   async componentDidMount() {
@@ -528,9 +534,7 @@ export default class AgendaView extends Component {
     });
     this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
     this.props.navigation.addListener('didFocus', async () => {
-      this.setState({showModal: true});
-      await this.formatter();
-      this.setState({showModal: false});
+      await this.formatData();
     });
   }
   componentWillUnmount() {
