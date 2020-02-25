@@ -510,6 +510,8 @@ export default class SettingsScreen extends React.Component {
               let required =
                 content1.GetEventsByPeriodResult[p].RequiredPersons;
               var conductor = content1.GetEventsByPeriodResult[p].Conductor;
+              var sceneId = content1.GetEventsByPeriodResult[p].ResourceId;
+              var serverId = content1.GetEventsByPeriodResult[p].Id;
               realm.write(() => {
                 realm.create(
                   'EventItem',
@@ -524,6 +526,8 @@ export default class SettingsScreen extends React.Component {
                     required: required,
                     conductor: conductor,
                     id: id++,
+                    sceneId: sceneId,
+                    serverId: serverId,
                   },
                   'modified',
                 );

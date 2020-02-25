@@ -122,7 +122,7 @@ export default class AgendaView extends Component {
             icon={{
               name: 'refresh',
               type: 'material-community',
-              size: 25,
+              size: 22,
               color: '#000',
             }}
             buttonStyle={{backgroundColor: '#fff'}}
@@ -132,7 +132,7 @@ export default class AgendaView extends Component {
             icon={{
               name: 'calendar-today',
               type: 'material-community',
-              size: 25,
+              size: 22,
               color: '#000',
             }}
             buttonStyle={{backgroundColor: '#fff'}}
@@ -142,7 +142,7 @@ export default class AgendaView extends Component {
             icon={{
               name: 'tasklist',
               type: 'octicon',
-              size: 25,
+              size: 22,
               color: '#000',
             }}
             buttonStyle={{backgroundColor: '#fff'}}
@@ -156,7 +156,7 @@ export default class AgendaView extends Component {
             icon={{
               name: 'cog',
               type: 'font-awesome',
-              size: 25,
+              size: 22,
               color: '#000',
             }}
             buttonStyle={{backgroundColor: '#fff'}}
@@ -186,178 +186,24 @@ export default class AgendaView extends Component {
     }
   };
 
-  fetchData = async () => {
-    const token = JSON.parse(await AsyncStorage.getItem('userToken'));
-    this.setState({usertoken: token});
-    var testBody = this.state.usertoken;
-    var newDate = new Date();
-    newDate.setMonth(newDate.getMonth() + 3);
-    var lastDate = new Date();
-    lastDate.setMonth(lastDate.getMonth() - 3);
-    var newMomentTime = moment(newDate);
-    var lastMomentTime = moment(lastDate);
-    var testArr = [];
-    NetInfo.fetch().then(async state => {
-      if (state.isConnected === true && this.state.usertoken !== null) {
-        let rawResponseScenes = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
-          },
-        );
-        const content = await rawResponseScenes.json();
-        for (var k = 1; k <= content.GetScenesResult.length; k++) {
-          testArr.push(k);
-        }
-        realm.write(() => {
-          if (realm.objects('Selected').length < 1) {
-            realm.create(
-              'Selected',
-              {selected: JSON.stringify(testArr), id: 1},
-              'modified',
-            );
-            this.setState({realm});
-          }
-        });
-        realm.write(() => {
-          if (realm.objects('Scene') !== null) {
-            realm.delete(realm.objects('Scene'));
-            for (var l = 1; l <= content.GetScenesResult.length; l++) {
-              realm.create(
-                'Scene',
-                {
-                  selected: false,
-                  id: l,
-                  title: content.GetScenesResult[l - 1].Name,
-                  color: content.GetScenesResult[l - 1].Color,
-                },
-                'modified',
-              );
-            }
-          } else {
-            for (var l = 1; l <= content.GetScenesResult.length; l++) {
-              realm.create(
-                'Scene',
-                {
-                  selected: false,
-                  id: l,
-                  title: content.GetScenesResult[l - 1].Name,
-                  color: content.GetScenesResult[l - 1].Color,
-                },
-                'modified',
-              );
-            }
-          }
-        });
-        this.setState({realm});
-      }
-    });
-    NetInfo.fetch().then(async state => {
-      if (
-        state.isConnected === true &&
-        //realm.objects('EventItem') === null &&
-        this.state.usertoken !== null
-      ) {
-        var testBody1 = this.state.usertoken;
-        let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody1,
-          },
-        );
-        const contentScenes = await rawResponse.json();
-        var id = 0;
-        // if (realm.objects('EventItem') !== null) {
-        //   realm.write(() => {
-        //     let allEvents = realm.objects('EventItem');
-        //     realm.delete(allEvents);
-        //   });
-        // }
-        var scenesArr = [];
-        for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
-          scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
-        }
-        for (var l = 0; l < scenesArr.length; l++) {
-          let urlTest =
-            'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
-            scenesArr[l] +
-            '/' +
-            moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
-            '/' +
-            moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
-          let rawResponse1 = await fetch(urlTest, {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
-          });
-          const content1 = await rawResponse1.json();
-          for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
-            if (
-              content1.GetEventsByPeriodResult[p].StartDateStr !== undefined &&
-              content1.GetEventsByPeriodResult[p].Title !== undefined
-            ) {
-              var beginTime = content1.GetEventsByPeriodResult[
-                p
-              ].StartDateStr.substring(11);
-              var endingTime = content1.GetEventsByPeriodResult[
-                p
-              ].EndDateStr.substring(11);
-              var eventTime = beginTime + ' - ' + endingTime;
-              var date = content1.GetEventsByPeriodResult[
-                p
-              ].StartDateStr.substring(0, 10)
-                .split('.')
-                .join('-');
-              var dateFormatted =
-                date.substring(6) +
-                '-' +
-                date.substring(3).substring(0, 2) +
-                '-' +
-                date.substring(0, 2);
-              realm.write(() => {
-                realm.create(
-                  'EventItem',
-                  {
-                    title: content1.GetEventsByPeriodResult[p].Title,
-                    date: dateFormatted,
-                    scene: l + 1,
-                    time: eventTime,
-                    id: id++,
-                  },
-                  'modified',
-                );
-                this.setState({realm});
-              });
-            }
-          }
-        }
-      }
-    });
-  };
-
   getModifiedEvents = async () => {
     const token = JSON.parse(await AsyncStorage.getItem('userToken'));
     this.setState({usertoken: token});
     var testBody = this.state.usertoken;
+    const refreshDateStorage = JSON.parse(
+      await AsyncStorage.getItem('ModifiedRefresh'),
+    );
+    if (refreshDateStorage == null) {
+      var refreshSecondDate = new Date(
+        new Date(refreshDate).getTime() - 5 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
+    } else {
+      var lastMomentTime = moment(refreshDateStorage);
+    }
+    console.log(lastMomentTime);
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
-    var refreshSecondDate = new Date(
-      new Date(refreshDate).getTime() - 5 * 60 * 1000,
-    );
-    var lastMomentTime = moment(refreshSecondDate);
     NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponse = await fetch(
@@ -397,81 +243,68 @@ export default class AgendaView extends Component {
             p < content1.GetModifiedEventsByPeriodResult.length;
             p++
           ) {
-            if (
-              content1.GetModifiedEventsByPeriodResult[p].StartDateStr !==
-                undefined &&
-              content1.GetModifiedEventsByPeriodResult[p].Title !== undefined
-            ) {
-              let beginTime = content1.GetModifiedEventsByPeriodResult[
-                p
-              ].StartDateStr.substring(11);
-              let endingTime = content1.GetModifiedEventsByPeriodResult[
-                p
-              ].EndDateStr.substring(11);
-              let eventTime = beginTime + ' - ' + endingTime;
-              let date = content1.GetModifiedEventsByPeriodResult[
-                p
-              ].StartDateStr.substring(0, 10)
-                .split('.')
-                .join('-');
-              let dateFormatted =
-                date.substring(6) +
-                '-' +
-                date.substring(3).substring(0, 2) +
-                '-' +
-                date.substring(0, 2);
-              let alertedPersons =
-                content1.GetModifiedEventsByPeriodResult[p].AlertedPersons;
-              let troups = content1.GetModifiedEventsByPeriodResult[p].Troups;
-              let outer =
-                content1.GetModifiedEventsByPeriodResult[p].OuterPersons;
-              let required =
-                content1.GetModifiedEventsByPeriodResult[p].RequiredPersons;
-              let conductor =
-                content1.GetModifiedEventsByPeriodResult[p].Conductor;
-              let sceneId =
-                content1.GetModifiedEventsByPeriodResult[p].ResourceId;
-              let refreshed = realm
-                .objects('EventItem')
-                .filtered(
-                  'title = $0 AND sceneId = $1 AND date = $2',
-                  content1.GetModifiedEventsByPeriodResult[p].Title,
-                  sceneId,
-                  dateFormatted,
-                ).id;
-              let refreshedScene = realm
-                .objects('EventItem')
-                .filtered(
-                  'title = $0 AND sceneId = $1 AND date = $2',
-                  content1.GetModifiedEventsByPeriodResult[p].Title,
-                  sceneId,
-                  dateFormatted,
-                ).scene;
-              realm.write(() => {
-                realm.create(
-                  'EventItem',
-                  {
-                    title: content1.GetModifiedEventsByPeriodResult[p].Title,
-                    date: dateFormatted,
-                    scene: refreshedScene,
-                    time: eventTime,
-                    alerted: alertedPersons,
-                    outer: outer,
-                    troups: troups,
-                    required: required,
-                    conductor: conductor,
-                    id: refreshed,
-                    sceneId: sceneId,
-                  },
-                  'modified',
-                );
-                this.setState({realm});
-              });
-            }
+            let beginTime = content1.GetModifiedEventsByPeriodResult[
+              p
+            ].StartDateStr.substring(11);
+            let endingTime = content1.GetModifiedEventsByPeriodResult[
+              p
+            ].EndDateStr.substring(11);
+            let eventTime = beginTime + ' - ' + endingTime;
+            let date = content1.GetModifiedEventsByPeriodResult[
+              p
+            ].StartDateStr.substring(0, 10)
+              .split('.')
+              .join('-');
+            let dateFormatted =
+              date.substring(6) +
+              '-' +
+              date.substring(3).substring(0, 2) +
+              '-' +
+              date.substring(0, 2);
+            let alertedPersons =
+              content1.GetModifiedEventsByPeriodResult[p].AlertedPersons;
+            let troups = content1.GetModifiedEventsByPeriodResult[p].Troups;
+            let outer =
+              content1.GetModifiedEventsByPeriodResult[p].OuterPersons;
+            let required =
+              content1.GetModifiedEventsByPeriodResult[p].RequiredPersons;
+            let conductor =
+              content1.GetModifiedEventsByPeriodResult[p].Conductor;
+            let sceneId =
+              content1.GetModifiedEventsByPeriodResult[p].ResourceId;
+            let serverId = content1.GetModifiedEventsByPeriodResult[p].Id;
+            let refreshed = realm
+              .objects('EventItem')
+              .filtered('serverId = $0', serverId)[0].id;
+            let refreshedScene = realm
+              .objects('EventItem')
+              .filtered('serverId = $0', serverId)[0].scene;
+            realm.write(() => {
+              realm.create(
+                'EventItem',
+                {
+                  title: content1.GetModifiedEventsByPeriodResult[p].Title,
+                  date: dateFormatted,
+                  scene: refreshedScene,
+                  time: eventTime,
+                  alerted: alertedPersons,
+                  outer: outer,
+                  troups: troups,
+                  required: required,
+                  conductor: conductor,
+                  sceneId: sceneId,
+                  serverId: serverId,
+                  id: refreshed,
+                },
+                'modified',
+              );
+              this.setState({realm});
+            });
           }
         }
       }
     });
+    await AsyncStorage.setItem('ModifiedRefresh', JSON.stringify(refreshDate));
   };
 
   getDeletedEvents = async () => {
@@ -480,10 +313,17 @@ export default class AgendaView extends Component {
     var testBody = this.state.usertoken;
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
-    var refreshSecondDate = new Date(
-      new Date(refreshDate).getTime() - 5 * 60 * 1000,
+    const refreshDateStorage = JSON.parse(
+      await AsyncStorage.getItem('DeletedRefresh'),
     );
-    var lastMomentTime = moment(refreshSecondDate);
+    if (refreshDateStorage == null) {
+      var refreshSecondDate = new Date(
+        new Date(refreshDate).getTime() - 5 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
+    } else {
+      var lastMomentTime = moment(refreshDateStorage);
+    }
     let urlTest =
       'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
       moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
@@ -501,39 +341,18 @@ export default class AgendaView extends Component {
     if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
     } else {
       for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
-        if (
-          content1.GetDeletedEventsByPeriodResult[p].StartDateStr !==
-            undefined &&
-          content1.GetDeletedEventsByPeriodResult[p].Title !== undefined
-        ) {
-          let date = content1.GetDeletedEventsByPeriodResult[
-            p
-          ].StartDateStr.substring(0, 10)
-            .split('.')
-            .join('-');
-          let dateFormatted =
-            date.substring(6) +
-            '-' +
-            date.substring(3).substring(0, 2) +
-            '-' +
-            date.substring(0, 2);
-          let sceneId = content1.GetDeletedEventsByPeriodResult[p].ResourceId;
-          let deleted = realm
-            .objects('EventItem')
-            .filtered(
-              'title = $0 AND sceneId = $1 AND date = $2',
-              content1.GetDeletedEventsByPeriodResult[p].Title,
-              sceneId,
-              dateFormatted,
-            );
-          realm.write(() => {
-            realm.delete(deleted);
-          });
+        let serverId = content1.GetDeletedEventsByPeriodResult[p].serverId;
+        let deleted = realm
+          .objects('EventItem')
+          .filtered('serverId = $0', serverId);
+        realm.write(() => {
+          realm.delete(deleted);
+        });
 
-          this.setState({realm});
-        }
+        this.setState({realm});
       }
     }
+    await AsyncStorage.setItem('DeletedRefresh', JSON.stringify(refreshDate));
   };
 
   formatter = async () => {
@@ -699,9 +518,8 @@ export default class AgendaView extends Component {
   refreshDataFromApi = async () => {
     await this.getModifiedEvents();
     await this.getDeletedEvents();
-    RnBgTask.runInBackground(async () => {
-      await this.setNotifications();
-    });
+    await this.setNotifications();
+    await this.formatter();
   };
 
   async componentDidMount() {

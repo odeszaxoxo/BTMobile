@@ -13,7 +13,9 @@ Event.schema = {
     troups: 'string',
     required: 'string',
     conductor: 'string',
+    sceneId: 'string',
     id: 'int',
+    serverId: 'int',
   },
   primaryKey: 'id',
 };
