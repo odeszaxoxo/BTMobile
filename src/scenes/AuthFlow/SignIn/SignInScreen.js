@@ -230,17 +230,17 @@ export default class SignInScreen extends React.Component {
             'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
               scenesArr[l] +
               '/' +
-              moment(this.state.endTime).format('YYYY-MM-DDTHH:MM:SS') +
+              moment(this.state.endTime).format('YYYY-MM-DDTHH:mm:ss') +
               '/' +
-              moment(this.state.startTime).format('YYYY-MM-DDTHH:MM:SS'),
+              moment(this.state.startTime).format('YYYY-MM-DDTHH:mm:ss'),
           );
           let urlTest =
             'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
             scenesArr[l] +
             '/' +
-            moment(this.state.endTime).format('YYYY-MM-DDTHH:MM:SS') +
+            moment(this.state.endTime).format('YYYY-MM-DDTHH:mm:ss') +
             '/' +
-            moment(this.state.startTime).format('YYYY-MM-DDTHH:MM:SS');
+            moment(this.state.startTime).format('YYYY-MM-DDTHH:mm:ss');
           let rawResponse1 = await fetch(urlTest, {
             method: 'POST',
             headers: {

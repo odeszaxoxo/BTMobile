@@ -22,7 +22,6 @@ import NetInfo from '@react-native-community/netinfo';
 import moment from 'moment';
 import {Overlay} from 'react-native-elements';
 import NotificationServiceLong from '../../services/NotificationServiceLong';
-import RnBgTask from 'react-native-bg-thread';
 
 var _ = require('lodash');
 
@@ -196,11 +195,14 @@ export default class AgendaView extends Component {
     );
     if (refreshDateStorage == null) {
       var refreshSecondDate = new Date(
-        new Date(refreshDate).getTime() - 5 * 60 * 1000,
+        new Date(refreshDate).getTime() - 10 * 60 * 1000,
       );
       var lastMomentTime = moment(refreshSecondDate);
     } else {
-      var lastMomentTime = moment(refreshDateStorage);
+      var refreshSecondDate = new Date(
+        new Date(refreshDateStorage).getTime() - 10 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
     }
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
@@ -224,9 +226,10 @@ export default class AgendaView extends Component {
         }
         let urlTest =
           'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
-          moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
+          moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
           '/' +
-          moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
+          moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
+        console.log(urlTest);
         let rawResponse1 = await fetch(urlTest, {
           method: 'POST',
           headers: {
@@ -332,6 +335,7 @@ export default class AgendaView extends Component {
         }
       }
     });
+    await AsyncStorage.removeItem('ModifiedRefresh');
     await AsyncStorage.setItem('ModifiedRefresh', JSON.stringify(refreshDate));
   };
 
@@ -340,23 +344,26 @@ export default class AgendaView extends Component {
     this.setState({usertoken: token});
     var testBody = this.state.usertoken;
     const refreshDateStorage = JSON.parse(
-      await AsyncStorage.getItem('DeletedRefresh'),
+      await AsyncStorage.getItem('ModifiedRefresh'),
     );
     if (refreshDateStorage == null) {
       var refreshSecondDate = new Date(
-        new Date(refreshDate).getTime() - 5 * 60 * 1000,
+        new Date(refreshDate).getTime() - 10 * 60 * 1000,
       );
       var lastMomentTime = moment(refreshSecondDate);
     } else {
-      var lastMomentTime = moment(refreshDateStorage);
+      var refreshSecondDate = new Date(
+        new Date(refreshDateStorage).getTime() - 10 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
     }
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
     let urlTest =
       'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
-      moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
+      moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
       '/' +
-      moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
+      moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
     console.log(urlTest);
     let rawResponse1 = await fetch(urlTest, {
       method: 'POST',
@@ -367,21 +374,22 @@ export default class AgendaView extends Component {
       body: testBody,
     });
     const content1 = await rawResponse1.json();
+    console.log(content1);
     if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
     } else {
       for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
-        let serverId = content1.GetDeletedEventsByPeriodResult[p].serverId;
+        let serverId = content1.GetDeletedEventsByPeriodResult[p].EventId;
         let deleted = realm
           .objects('EventItem')
           .filtered('serverId = $0', serverId);
         realm.write(() => {
           realm.delete(deleted);
         });
-
         this.setState({realm});
       }
     }
-    await AsyncStorage.setItem('DeletedRefresh', JSON.stringify(refreshDate));
+    await AsyncStorage.removeItem('ModifiedRefresh');
+    await AsyncStorage.setItem('ModifiedRefresh', JSON.stringify(refreshDate));
   };
 
   formatter = async () => {
@@ -546,9 +554,9 @@ export default class AgendaView extends Component {
 
   refreshDataFromApi = async () => {
     this.setState({showRefreshModal: true});
-    await this.getModifiedEvents();
+    //await this.getModifiedEvents();
     await this.getDeletedEvents();
-    await this.setNotifications();
+    //await this.setNotifications();
     await this.formatter();
     this.setState({showRefreshModal: false});
   };

@@ -35,11 +35,11 @@ export default class Store extends React.Component {
     const {navigation} = this.props;
     await AsyncStorage.setItem(
       'SelectedStartDate',
-      moment(this.state.startDate).format('YYYY-MM-DDTHH:MM:SS'),
+      moment(this.state.startDate).format('YYYY-MM-DDTHH:mm:ss'),
     );
     await AsyncStorage.setItem(
       'SelectedEndDate',
-      moment(this.state.endDate).format('YYYY-MM-DDTHH:MM:SS'),
+      moment(this.state.endDate).format('YYYY-MM-DDTHH:mm:ss'),
     );
     navigation.navigate('Agenda');
   };
