@@ -775,7 +775,7 @@ export default class SettingsScreen extends React.Component {
           <Button
             title="Обновить"
             iconName="refresh"
-            onPress={this.fetchData}
+            onPress={this.onRefreshClick}
             buttonStyle={{
               backgroundColor: 'transparent',
               borderWidth: 0.5,
