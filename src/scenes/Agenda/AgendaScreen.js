@@ -97,6 +97,7 @@ export default class AgendaView extends Component {
       username: null,
       showModal: false,
       registered: [],
+      showRefreshModal: false,
     };
     this.searchButton = this.searchButton.bind(this);
     this.reset = this.reset.bind(this);
@@ -201,7 +202,6 @@ export default class AgendaView extends Component {
     } else {
       var lastMomentTime = moment(refreshDateStorage);
     }
-    console.log(lastMomentTime);
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
     NetInfo.fetch().then(async state => {
@@ -273,33 +273,61 @@ export default class AgendaView extends Component {
             let sceneId =
               content1.GetModifiedEventsByPeriodResult[p].ResourceId;
             let serverId = content1.GetModifiedEventsByPeriodResult[p].Id;
-            let refreshed = realm
-              .objects('EventItem')
-              .filtered('serverId = $0', serverId)[0].id;
+            let findVar = sceneId.charAt(0).toUpperCase() + sceneId.slice(1);
             let refreshedScene = realm
-              .objects('EventItem')
-              .filtered('serverId = $0', serverId)[0].scene;
-            realm.write(() => {
-              realm.create(
-                'EventItem',
-                {
-                  title: content1.GetModifiedEventsByPeriodResult[p].Title,
-                  date: dateFormatted,
-                  scene: refreshedScene,
-                  time: eventTime,
-                  alerted: alertedPersons,
-                  outer: outer,
-                  troups: troups,
-                  required: required,
-                  conductor: conductor,
-                  sceneId: sceneId,
-                  serverId: serverId,
-                  id: refreshed,
-                },
-                'modified',
-              );
-              this.setState({realm});
-            });
+              .objects('Scene')
+              .filtered('resourceId = $0', findVar)[0].id;
+            if (
+              realm.objects('EventItem').filtered('serverId = $0', serverId)[0]
+                .id === undefined
+            ) {
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetModifiedEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: refreshedScene,
+                    time: eventTime,
+                    alerted: alertedPersons,
+                    outer: outer,
+                    troups: troups,
+                    required: required,
+                    conductor: conductor,
+                    sceneId: sceneId,
+                    serverId: serverId,
+                    id: realm.objects('EventItem').length + 1,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            } else {
+              let refreshed = realm
+                .objects('EventItem')
+                .filtered('serverId = $0', serverId)[0].id;
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetModifiedEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: refreshedScene,
+                    time: eventTime,
+                    alerted: alertedPersons,
+                    outer: outer,
+                    troups: troups,
+                    required: required,
+                    conductor: conductor,
+                    sceneId: sceneId,
+                    serverId: serverId,
+                    id: refreshed,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            }
           }
         }
       }
@@ -311,8 +339,6 @@ export default class AgendaView extends Component {
     const token = JSON.parse(await AsyncStorage.getItem('userToken'));
     this.setState({usertoken: token});
     var testBody = this.state.usertoken;
-    var refreshDate = new Date();
-    var newMomentTime = moment(refreshDate);
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('DeletedRefresh'),
     );
@@ -324,11 +350,14 @@ export default class AgendaView extends Component {
     } else {
       var lastMomentTime = moment(refreshDateStorage);
     }
+    var refreshDate = new Date();
+    var newMomentTime = moment(refreshDate);
     let urlTest =
       'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
       moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
       '/' +
       moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
+    console.log(urlTest);
     let rawResponse1 = await fetch(urlTest, {
       method: 'POST',
       headers: {
@@ -418,7 +447,7 @@ export default class AgendaView extends Component {
   setNotifications = async () => {
     var firstDate = new Date();
     var newMomentTime = moment(firstDate, 'YYYY-MM-DD');
-    var lastMomentTime = moment(firstDate, 'YYYY-MM-DD').add(1, 'days');
+    var lastMomentTime = moment(firstDate, 'YYYY-MM-DD').add(3, 'days');
     for (let i = 0; i < realm.objects('EventItem').length; i++) {
       let getId = '99' + i.toString();
       let getBigId = '98' + i.toString();
@@ -516,10 +545,12 @@ export default class AgendaView extends Component {
   };
 
   refreshDataFromApi = async () => {
+    this.setState({showRefreshModal: true});
     await this.getModifiedEvents();
     await this.getDeletedEvents();
     await this.setNotifications();
-    await this.formatData();
+    await this.formatter();
+    this.setState({showRefreshModal: false});
   };
 
   formatData = async () => {
@@ -572,6 +603,21 @@ export default class AgendaView extends Component {
           }}>
           <Text style={{alignSelf: 'center', fontSize: 14}}>
             Подождите, идет форматирование данных.
+          </Text>
+          <ActivityIndicator size="small" color="#0000ff" />
+        </Overlay>
+        <Overlay
+          isVisible={this.state.showRefreshModal}
+          overlayStyle={{
+            width: '90%',
+            height: '20%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <Text style={{alignSelf: 'center', fontSize: 14}}>
+            Подождите, идет загрузка данных.
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>

@@ -24,7 +24,13 @@ class Scene extends Realm.Object {}
 Scene.schema = {
   name: 'Scene',
   primaryKey: 'id',
-  properties: {selected: 'bool', id: 'int', title: 'string', color: 'string'},
+  properties: {
+    selected: 'bool',
+    id: 'int',
+    title: 'string',
+    color: 'string',
+    resourceId: 'string',
+  },
 };
 
 class Selected extends Realm.Object {}

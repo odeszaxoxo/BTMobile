@@ -171,6 +171,7 @@ export default class SignInScreen extends React.Component {
                   id: l,
                   title: content.GetScenesResult[l - 1].Name,
                   color: content.GetScenesResult[l - 1].Color,
+                  resourceId: content.GetScenesResult[l - 1].ResourceId,
                 },
                 'modified',
               );
@@ -184,6 +185,7 @@ export default class SignInScreen extends React.Component {
                   id: l,
                   title: content.GetScenesResult[l - 1].Name,
                   color: content.GetScenesResult[l - 1].Color,
+                  resourceId: content.GetScenesResult[l - 1].ResourceId,
                 },
                 'modified',
               );
