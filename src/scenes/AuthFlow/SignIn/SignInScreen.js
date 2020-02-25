@@ -13,6 +13,7 @@ import login from '../../../images/login.jpg.png';
 import NetInfo from '@react-native-community/netinfo';
 import moment from 'moment';
 import realm from '../../../services/realm';
+import {Header} from 'react-navigation-stack';
 
 var _ = require('lodash');
 
@@ -36,11 +37,11 @@ export default class SignInScreen extends React.Component {
       <ImageBackground source={login} style={styles.container}>
         <KeyboardAvoidingView
           behavior="position"
+          keyboardVerticalOffset={Header.HEIGHT - 500}
           style={{
-            minHeight: '45%',
             flexDirection: 'column',
             justifyContent: 'space-around',
-            marginTop: '50%',
+            flex: 1,
           }}>
           <View style={styles.loginForm}>
             <View style={styles.input}>
@@ -103,14 +104,14 @@ export default class SignInScreen extends React.Component {
         <Overlay
           isVisible={this.state.showModal}
           overlayStyle={{
-            width: '80%',
-            height: '10%',
+            width: '90%',
+            height: '20%',
             alignSelf: 'center',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-around',
           }}>
-          <Text style={{alignSelf: 'center'}}>
+          <Text style={{alignSelf: 'center', fontSize: 16}}>
             Подождите, идет первоначальная загрузка данных.
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
@@ -277,6 +278,7 @@ export default class SignInScreen extends React.Component {
               let required =
                 content1.GetEventsByPeriodResult[p].RequiredPersons;
               var conductor = content1.GetEventsByPeriodResult[p].Conductor;
+              var sceneId = content1.GetEventsByPeriodResult[p].ResourceId;
               realm.write(() => {
                 realm.create(
                   'EventItem',
@@ -291,6 +293,7 @@ export default class SignInScreen extends React.Component {
                     required: required,
                     conductor: conductor,
                     id: id++,
+                    sceneId: sceneId,
                   },
                   'modified',
                 );
@@ -390,7 +393,7 @@ const styles = StyleSheet.create({
   },
   loginForm: {
     width: '100%',
-    height: '50%',
+    height: '100%',
     display: 'flex',
     justifyContent: 'center',
   },

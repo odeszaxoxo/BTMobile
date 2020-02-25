@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   AsyncStorage,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import {Agenda, LocaleConfig} from 'react-native-calendars';
 import {Button} from 'react-native-elements';
@@ -21,6 +22,7 @@ import NetInfo from '@react-native-community/netinfo';
 import moment from 'moment';
 import {Overlay} from 'react-native-elements';
 import NotificationServiceLong from '../../services/NotificationServiceLong';
+import RnBgTask from 'react-native-bg-thread';
 
 var _ = require('lodash');
 
@@ -346,6 +348,194 @@ export default class AgendaView extends Component {
     });
   };
 
+  getModifiedEvents = async () => {
+    const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+    this.setState({usertoken: token});
+    var testBody = this.state.usertoken;
+    var refreshDate = new Date();
+    var newMomentTime = moment(refreshDate);
+    var refreshSecondDate = new Date(
+      new Date(refreshDate).getTime() - 5 * 60 * 1000,
+    );
+    var lastMomentTime = moment(refreshSecondDate);
+    NetInfo.fetch().then(async state => {
+      if (state.isConnected === true && this.state.usertoken !== null) {
+        let rawResponse = await fetch(
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const contentScenes = await rawResponse.json();
+        var scenesArr = [];
+        for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
+          scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
+        }
+        let urlTest =
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
+          moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
+          '/' +
+          moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
+        let rawResponse1 = await fetch(urlTest, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: testBody,
+        });
+        const content1 = await rawResponse1.json();
+        if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
+        } else {
+          for (
+            var p = 0;
+            p < content1.GetModifiedEventsByPeriodResult.length;
+            p++
+          ) {
+            if (
+              content1.GetModifiedEventsByPeriodResult[p].StartDateStr !==
+                undefined &&
+              content1.GetModifiedEventsByPeriodResult[p].Title !== undefined
+            ) {
+              let beginTime = content1.GetModifiedEventsByPeriodResult[
+                p
+              ].StartDateStr.substring(11);
+              let endingTime = content1.GetModifiedEventsByPeriodResult[
+                p
+              ].EndDateStr.substring(11);
+              let eventTime = beginTime + ' - ' + endingTime;
+              let date = content1.GetModifiedEventsByPeriodResult[
+                p
+              ].StartDateStr.substring(0, 10)
+                .split('.')
+                .join('-');
+              let dateFormatted =
+                date.substring(6) +
+                '-' +
+                date.substring(3).substring(0, 2) +
+                '-' +
+                date.substring(0, 2);
+              let alertedPersons =
+                content1.GetModifiedEventsByPeriodResult[p].AlertedPersons;
+              let troups = content1.GetModifiedEventsByPeriodResult[p].Troups;
+              let outer =
+                content1.GetModifiedEventsByPeriodResult[p].OuterPersons;
+              let required =
+                content1.GetModifiedEventsByPeriodResult[p].RequiredPersons;
+              let conductor =
+                content1.GetModifiedEventsByPeriodResult[p].Conductor;
+              let sceneId =
+                content1.GetModifiedEventsByPeriodResult[p].ResourceId;
+              let refreshed = realm
+                .objects('EventItem')
+                .filtered(
+                  'title = $0 AND sceneId = $1 AND date = $2',
+                  content1.GetModifiedEventsByPeriodResult[p].Title,
+                  sceneId,
+                  dateFormatted,
+                ).id;
+              let refreshedScene = realm
+                .objects('EventItem')
+                .filtered(
+                  'title = $0 AND sceneId = $1 AND date = $2',
+                  content1.GetModifiedEventsByPeriodResult[p].Title,
+                  sceneId,
+                  dateFormatted,
+                ).scene;
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetModifiedEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: refreshedScene,
+                    time: eventTime,
+                    alerted: alertedPersons,
+                    outer: outer,
+                    troups: troups,
+                    required: required,
+                    conductor: conductor,
+                    id: refreshed,
+                    sceneId: sceneId,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            }
+          }
+        }
+      }
+    });
+  };
+
+  getDeletedEvents = async () => {
+    const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+    this.setState({usertoken: token});
+    var testBody = this.state.usertoken;
+    var refreshDate = new Date();
+    var newMomentTime = moment(refreshDate);
+    var refreshSecondDate = new Date(
+      new Date(refreshDate).getTime() - 5 * 60 * 1000,
+    );
+    var lastMomentTime = moment(refreshSecondDate);
+    let urlTest =
+      'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
+      moment(lastMomentTime).format('YYYY-MM-DDTHH:MM:SS') +
+      '/' +
+      moment(newMomentTime).format('YYYY-MM-DDTHH:MM:SS');
+    let rawResponse1 = await fetch(urlTest, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: testBody,
+    });
+    const content1 = await rawResponse1.json();
+    if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
+    } else {
+      for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
+        if (
+          content1.GetDeletedEventsByPeriodResult[p].StartDateStr !==
+            undefined &&
+          content1.GetDeletedEventsByPeriodResult[p].Title !== undefined
+        ) {
+          let date = content1.GetDeletedEventsByPeriodResult[
+            p
+          ].StartDateStr.substring(0, 10)
+            .split('.')
+            .join('-');
+          let dateFormatted =
+            date.substring(6) +
+            '-' +
+            date.substring(3).substring(0, 2) +
+            '-' +
+            date.substring(0, 2);
+          let sceneId = content1.GetDeletedEventsByPeriodResult[p].ResourceId;
+          let deleted = realm
+            .objects('EventItem')
+            .filtered(
+              'title = $0 AND sceneId = $1 AND date = $2',
+              content1.GetDeletedEventsByPeriodResult[p].Title,
+              sceneId,
+              dateFormatted,
+            );
+          realm.write(() => {
+            realm.delete(deleted);
+          });
+
+          this.setState({realm});
+        }
+      }
+    }
+  };
+
   formatter = async () => {
     var testArr = await AsyncStorage.getItem('Selected');
     var startDate = await AsyncStorage.getItem('SelectedStartDate');
@@ -435,7 +625,8 @@ export default class AgendaView extends Component {
           let datee = new Date(momentDate.toDate());
           let utcDate = moment.utc(datee);
           let title =
-            realm.objects('Scene')[realm.objects('EventItem')[id].scene].title +
+            realm.objects('Scene')[realm.objects('EventItem')[id].scene - 1]
+              .title +
             '.' +
             ' Соб./Через';
           let message =
@@ -505,16 +696,27 @@ export default class AgendaView extends Component {
     }
   };
 
+  refreshDataFromApi = async () => {
+    await this.getModifiedEvents();
+    await this.getDeletedEvents();
+    RnBgTask.runInBackground(async () => {
+      await this.setNotifications();
+    });
+  };
+
   async componentDidMount() {
     this.props.navigation.setParams({
       reset: this.reset.bind(this),
     });
-    this.setNotifications();
+    this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
     this.props.navigation.addListener('didFocus', async () => {
       this.setState({showModal: true});
       await this.formatter();
       this.setState({showModal: false});
     });
+  }
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 
   searchButton() {
@@ -539,14 +741,14 @@ export default class AgendaView extends Component {
         <Overlay
           isVisible={this.state.showModal}
           overlayStyle={{
-            width: '80%',
-            height: '10%',
+            width: '90%',
+            height: '20%',
             alignSelf: 'center',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-around',
           }}>
-          <Text style={{alignSelf: 'center'}}>
+          <Text style={{alignSelf: 'center', fontSize: 14}}>
             Подождите, идет форматирование данных.
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
@@ -565,15 +767,14 @@ export default class AgendaView extends Component {
           minDate={this.state.startDate}
           maxDate={this.state.endDate}
           //theme={{'stylesheet.agenda.list': {container: {paddingBottom: 10}}}}
-          //onRefresh={() => console.log('refresh')}
+          onRefresh={() => {
+            this.refreshDataFromApi();
+          }}
         />
         <Modal
           animationType="fade"
           transparent={true}
-          visible={this.state.modalVisible}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-          }}>
+          visible={this.state.modalVisible}>
           <View
             style={{
               flex: 1,
@@ -602,35 +803,40 @@ export default class AgendaView extends Component {
                     fontWeight: '600',
                     paddingLeft: 20,
                   }}>
-                  Событие
+                  Информация
                 </Text>
               </View>
               <View
-                style={{width: '100%', height: '100%', flex: 1, padding: 30}}>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Название : {this.state.selectedText}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Время проведения : {this.state.selectedTime}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Сцена : {this.state.selectedScene}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Дирижер : {this.state.selectedConductor}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Труппы : {this.state.selectedTroups}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Оповещаемые : {this.state.selectedAlerted}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Внещние участники : {this.state.selectedOuter}
-                </Text>
-                <Text style={{fontSize: 18, marginBottom: 15}}>
-                  Обязательные участники : {this.state.selectedRequired}
-                </Text>
+                style={{
+                  width: '100%',
+                  height: '80%',
+                }}>
+                <ScrollView style={{paddingLeft: 30, paddingRight: 30}}>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Название : {this.state.selectedText}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Время проведения : {this.state.selectedTime}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Сцена : {this.state.selectedScene}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Дирижер : {this.state.selectedConductor}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Труппы : {this.state.selectedTroups}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Оповещаемые : {this.state.selectedAlerted}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Внешние участники : {this.state.selectedOuter}
+                  </Text>
+                  <Text style={{fontSize: 18, marginBottom: 15}}>
+                    Обязательные участники : {this.state.selectedRequired}
+                  </Text>
+                </ScrollView>
               </View>
               <TouchableHighlight
                 onPress={() => {
@@ -638,12 +844,12 @@ export default class AgendaView extends Component {
                 }}
                 style={{
                   width: '100%',
-                  height: '8%',
-                  backgroundColor: '',
+                  height: '5%',
                   justifyContent: 'center',
                   alignItems: 'flex-end',
+                  marginTop: 20,
                 }}>
-                <Text style={{fontSize: 20, padding: 20}}>Close</Text>
+                <Text style={{fontSize: 16, marginRight: 20}}>Закрыть</Text>
               </TouchableHighlight>
             </View>
           </View>

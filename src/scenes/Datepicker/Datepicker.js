@@ -1,13 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  Text,
-  TouchableHighlight,
-  AsyncStorage,
-} from 'react-native';
+import {StyleSheet, View, Text, AsyncStorage} from 'react-native';
 import {Button} from 'react-native-elements';
 import moment from 'moment';
 
