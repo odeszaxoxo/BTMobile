@@ -373,6 +373,12 @@ export default class SettingsScreen extends React.Component {
   }
 
   fetchData = async testBody => {
+    if (realm.objects('EventItem') !== null) {
+      realm.write(() => {
+        let allEvents = realm.objects('EventItem');
+        realm.delete(allEvents);
+      });
+    }
     var testArr = [];
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
@@ -455,12 +461,6 @@ export default class SettingsScreen extends React.Component {
         );
         const contentScenes = await rawResponse.json();
         var id = 0;
-        // if (realm.objects('EventItem') !== null) {
-        //   realm.write(() => {
-        //     let allEvents = realm.objects('EventItem');
-        //     realm.delete(allEvents);
-        //   });
-        // }
         var scenesArr = [];
         for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
@@ -551,6 +551,25 @@ export default class SettingsScreen extends React.Component {
   onRefreshClick = async () => {
     await this.refresh(this.state.userToken);
     this.props.navigation.navigate('Agenda');
+  };
+
+  fixedThreeUpdate = async () => {
+    var months = 3;
+    await this.setMonths(months);
+    await this.onRefreshClick();
+  };
+
+  fixedSixUpdate = async () => {
+    var months = 6;
+    await this.setMonths(months);
+    await this.onRefreshClick();
+  };
+
+  setMonths = months => {
+    var date = new Date();
+    var dateToday = moment(date);
+    var refreshDate = moment(date, 'YYYY-MM-DD').add(months, 'months');
+    this.setState({startDate: dateToday, endDate: refreshDate});
   };
 
   render() {
@@ -702,7 +721,7 @@ export default class SettingsScreen extends React.Component {
             titleStyle={{color: '#42a5f5', fontSize: 16, fontWeight: '700'}}
           />
         </SectionRow>
-        <SectionRow text="Обновить данные за выбранный период времени">
+        <SectionRow text="Обновить данные">
           <Text style={{marginLeft: 15, marginRight: 15, marginBottom: 15}}>
             Это может занять много времени, в зависимости от выбранного Вами
             промежутка дат.
@@ -713,6 +732,51 @@ export default class SettingsScreen extends React.Component {
               justifyContent: 'flex-start',
               zIndex: 0,
             }}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'space-around',
+                flexDirection: 'row',
+              }}>
+              <Button
+                title="3 месяца"
+                iconName="refresh"
+                onPress={this.fixedThreeUpdate}
+                buttonStyle={{
+                  backgroundColor: 'transparent',
+                  borderWidth: 0.5,
+                  borderRadius: 6,
+                  borderColor: '#42a5f5',
+                  margin: 5,
+                  width: '80%',
+                  alignSelf: 'center',
+                }}
+                titleStyle={{
+                  color: '#42a5f5',
+                  fontSize: 16,
+                  fontWeight: '700',
+                }}
+              />
+              <Button
+                title="6 месяцев"
+                iconName="refresh"
+                onPress={this.fixedSixUpdate}
+                buttonStyle={{
+                  backgroundColor: 'transparent',
+                  borderWidth: 0.5,
+                  borderRadius: 6,
+                  borderColor: '#42a5f5',
+                  margin: 5,
+                  width: '80%',
+                  alignSelf: 'center',
+                }}
+                titleStyle={{
+                  color: '#42a5f5',
+                  fontSize: 16,
+                  fontWeight: '700',
+                }}
+              />
+            </View>
             <View>
               <Text style={{marginBottom: 10, marginLeft: 5, fontSize: 14}}>
                 Обновить с :
@@ -773,7 +837,7 @@ export default class SettingsScreen extends React.Component {
             </View>
           </View>
           <Button
-            title="Обновить"
+            title="Обновить за выбранный период"
             iconName="refresh"
             onPress={this.onRefreshClick}
             buttonStyle={{
@@ -783,7 +847,7 @@ export default class SettingsScreen extends React.Component {
               borderColor: 'red',
               margin: 5,
             }}
-            titleStyle={{color: 'red', fontSize: 16, fontWeight: '700'}}
+            titleStyle={{color: 'red', fontSize: 12, fontWeight: '700'}}
           />
         </SectionRow>
       </ReactNativeSettingsPage>

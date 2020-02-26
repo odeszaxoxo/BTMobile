@@ -229,7 +229,6 @@ export default class AgendaView extends Component {
           moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
           '/' +
           moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
-        console.log(urlTest);
         let rawResponse1 = await fetch(urlTest, {
           method: 'POST',
           headers: {
@@ -364,7 +363,6 @@ export default class AgendaView extends Component {
       moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
       '/' +
       moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
-    console.log(urlTest);
     let rawResponse1 = await fetch(urlTest, {
       method: 'POST',
       headers: {
@@ -374,7 +372,6 @@ export default class AgendaView extends Component {
       body: testBody,
     });
     const content1 = await rawResponse1.json();
-    console.log(content1);
     if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
     } else {
       for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
