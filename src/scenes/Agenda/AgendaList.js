@@ -1,0 +1,535 @@
+/* eslint-disable react-native/no-inline-styles */
+import React from 'react';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  FlatList,
+  AsyncStorage,
+  Text,
+  ActivityIndicator,
+} from 'react-native';
+import {Button, Overlay} from 'react-native-elements';
+import NotificationService from '../../services/NotificationService';
+import NotificationServiceLong from '../../services/NotificationServiceLong';
+import realm from '../../services/realm';
+import {AgendaItem} from './AgendaItem';
+import moment from 'moment';
+import NetInfo from '@react-native-community/netinfo';
+
+var _ = require('lodash');
+
+export default class Store extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      items: [],
+      showModal: false,
+      showRefreshModal: false,
+      isRefreshing: false,
+    };
+    this.notif = new NotificationService(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
+    this.notifLong = new NotificationServiceLong(
+      this.onRegister.bind(this),
+      this.onNotif.bind(this),
+    );
+  }
+  static navigationOptions = ({navigation}) => {
+    const reset = navigation.getParam('reset', () => {});
+    return {
+      title: 'События',
+      headerRight: () => (
+        <View style={{flexDirection: 'row'}}>
+          <Button
+            onPress={() => reset()}
+            icon={{
+              name: 'refresh',
+              type: 'material-community',
+              size: 22,
+              color: '#000',
+            }}
+            buttonStyle={{backgroundColor: '#fff'}}
+          />
+          <Button
+            onPress={() => navigation.navigate('Datepicker')}
+            icon={{
+              name: 'calendar-today',
+              type: 'material-community',
+              size: 22,
+              color: '#000',
+            }}
+            buttonStyle={{backgroundColor: '#fff'}}
+          />
+          <Button
+            onPress={() => navigation.navigate('Scenes')}
+            icon={{
+              name: 'tasklist',
+              type: 'octicon',
+              size: 22,
+              color: '#000',
+            }}
+            buttonStyle={{backgroundColor: '#fff'}}
+          />
+        </View>
+      ),
+      headerLeft: () => (
+        <View style={{flexDirection: 'row'}}>
+          <Button
+            onPress={() => navigation.navigate('Settings')}
+            icon={{
+              name: 'cog',
+              type: 'font-awesome',
+              size: 22,
+              color: '#000',
+            }}
+            buttonStyle={{backgroundColor: '#fff'}}
+          />
+        </View>
+      ),
+    };
+  };
+
+  getUserPrefs = async () => {
+    try {
+      const token = JSON.parse(await AsyncStorage.getItem('userToken'));
+      this.setState({usertoken: token});
+      var testArr = JSON.parse(await AsyncStorage.getItem('Selected'));
+      this.setState({selectedCheck: testArr});
+      return [token, testArr];
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  componentDidMount = async () => {
+    this.props.navigation.setParams({reset: this.reset});
+    await this.getUserPrefs();
+    console.log(this.state.usertoken);
+    this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
+    this.props.navigation.addListener('didFocus', async () => {
+      await this.formatData();
+    });
+  };
+
+  formatData = async () => {
+    this.setState({showModal: true});
+    await this.formatter();
+    this.setState({showModal: false});
+  };
+
+  refreshDataFromApi = async () => {
+    this.setState({showRefreshModal: true});
+    await this.getModifiedEvents();
+    await this.getDeletedEvents();
+    //await this.setNotifications();
+    await this.formatter();
+    this.setState({showRefreshModal: false});
+  };
+
+  getModifiedEvents = async () => {
+    var testBody = this.state.usertoken;
+    const refreshDateStorage = JSON.parse(
+      await AsyncStorage.getItem('ModifiedRefresh'),
+    );
+    if (refreshDateStorage == null) {
+      var refreshSecondDate = new Date(
+        new Date(refreshDate).getTime() - 10 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
+    } else {
+      var refreshSecondDate = new Date(
+        new Date(refreshDateStorage).getTime() - 10 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
+    }
+    var refreshDate = new Date();
+    var newMomentTime = moment(refreshDate);
+    NetInfo.fetch().then(async state => {
+      if (state.isConnected === true && this.state.usertoken !== null) {
+        let rawResponse = await fetch(
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          },
+        );
+        const contentScenes = await rawResponse.json();
+        var scenesArr = [];
+        for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
+          scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
+        }
+        let urlTest =
+          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
+          moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
+          '/' +
+          moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
+        let rawResponse1 = await fetch(urlTest, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: testBody,
+        });
+        const content1 = await rawResponse1.json();
+        if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
+        } else {
+          for (
+            var p = 0;
+            p < content1.GetModifiedEventsByPeriodResult.length;
+            p++
+          ) {
+            let beginTime = content1.GetModifiedEventsByPeriodResult[
+              p
+            ].StartDateStr.substring(11);
+            let endingTime = content1.GetModifiedEventsByPeriodResult[
+              p
+            ].EndDateStr.substring(11);
+            let eventTime = beginTime + ' - ' + endingTime;
+            let date = content1.GetModifiedEventsByPeriodResult[
+              p
+            ].StartDateStr.substring(0, 10)
+              .split('.')
+              .join('-');
+            let dateFormatted =
+              date.substring(6) +
+              '-' +
+              date.substring(3).substring(0, 2) +
+              '-' +
+              date.substring(0, 2);
+            let alertedPersons =
+              content1.GetModifiedEventsByPeriodResult[p].AlertedPersons;
+            let troups = content1.GetModifiedEventsByPeriodResult[p].Troups;
+            let outer =
+              content1.GetModifiedEventsByPeriodResult[p].OuterPersons;
+            let required =
+              content1.GetModifiedEventsByPeriodResult[p].RequiredPersons;
+            let conductor =
+              content1.GetModifiedEventsByPeriodResult[p].Conductor;
+            let sceneId =
+              content1.GetModifiedEventsByPeriodResult[p].ResourceId;
+            let serverId = content1.GetModifiedEventsByPeriodResult[p].Id;
+            let findVar = sceneId.charAt(0).toUpperCase() + sceneId.slice(1);
+            let refreshedScene = realm
+              .objects('Scene')
+              .filtered('resourceId = $0', findVar)[0].id;
+            if (
+              realm.objects('EventItem').filtered('serverId = $0', serverId)[0]
+                .id === undefined
+            ) {
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetModifiedEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: refreshedScene,
+                    time: eventTime,
+                    alerted: alertedPersons,
+                    outer: outer,
+                    troups: troups,
+                    required: required,
+                    conductor: conductor,
+                    sceneId: sceneId,
+                    serverId: serverId,
+                    id: realm.objects('EventItem').length + 1,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            } else {
+              let refreshed = realm
+                .objects('EventItem')
+                .filtered('serverId = $0', serverId)[0].id;
+              realm.write(() => {
+                realm.create(
+                  'EventItem',
+                  {
+                    title: content1.GetModifiedEventsByPeriodResult[p].Title,
+                    date: dateFormatted,
+                    scene: refreshedScene,
+                    time: eventTime,
+                    alerted: alertedPersons,
+                    outer: outer,
+                    troups: troups,
+                    required: required,
+                    conductor: conductor,
+                    sceneId: sceneId,
+                    serverId: serverId,
+                    id: refreshed,
+                  },
+                  'modified',
+                );
+                this.setState({realm});
+              });
+            }
+          }
+        }
+      }
+    });
+    await AsyncStorage.removeItem('ModifiedRefresh');
+    await AsyncStorage.setItem('ModifiedRefresh', JSON.stringify(refreshDate));
+  };
+
+  getDeletedEvents = async () => {
+    var testBody = this.state.usertoken;
+    const refreshDateStorage = JSON.parse(
+      await AsyncStorage.getItem('ModifiedRefresh'),
+    );
+    if (refreshDateStorage == null) {
+      var refreshSecondDate = new Date(
+        new Date(refreshDate).getTime() - 10 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
+    } else {
+      var refreshSecondDate = new Date(
+        new Date(refreshDateStorage).getTime() - 10 * 60 * 1000,
+      );
+      var lastMomentTime = moment(refreshSecondDate);
+    }
+    var refreshDate = new Date();
+    var newMomentTime = moment(refreshDate);
+    let urlTest =
+      'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
+      moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
+      '/' +
+      moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
+    let rawResponse1 = await fetch(urlTest, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: testBody,
+    });
+    const content1 = await rawResponse1.json();
+    if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
+    } else {
+      for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
+        let serverId = content1.GetDeletedEventsByPeriodResult[p].EventId;
+        let deleted = realm
+          .objects('EventItem')
+          .filtered('serverId = $0', serverId);
+        realm.write(() => {
+          realm.delete(deleted);
+        });
+        this.setState({realm});
+      }
+    }
+    await AsyncStorage.removeItem('ModifiedRefresh');
+    await AsyncStorage.setItem('ModifiedRefresh', JSON.stringify(refreshDate));
+  };
+
+  formatter = async () => {
+    var testArr = await AsyncStorage.getItem('Selected');
+    var startDate = await AsyncStorage.getItem('SelectedStartDate');
+    var endDate = await AsyncStorage.getItem('SelectedEndDate');
+    var starter = new Date();
+    if (startDate !== null && endDate !== null) {
+      this.setState({startDate: startDate, endDate: endDate});
+    }
+    if (JSON.parse(testArr) === null) {
+      var arr2 = [];
+      for (let i = 1; i <= realm.objects('Scene').length; i++) {
+        arr2.push(i);
+      }
+      await AsyncStorage.setItem('Selected', JSON.stringify(arr2));
+    } else {
+      arr2 = JSON.parse(testArr);
+    }
+    var items = [];
+    for (var id = 0; id < realm.objects('EventItem').length; id++) {
+      if (arr2.includes(realm.objects('EventItem')[id].scene)) {
+        if (startDate !== null && endDate !== null) {
+          if (
+            realm.objects('EventItem')[id].date >= startDate &&
+            realm.objects('EventItem')[id].date <= endDate
+          ) {
+            items.push(realm.objects('EventItem')[id]);
+          }
+        } else {
+          items.push(realm.objects('EventItem')[id]);
+        }
+      }
+    }
+    items = _.sortBy(items, ['date', 'time']);
+    this.setState({items: items});
+    var index = _.findIndex(items, function(item) {
+      return item.date === moment(starter).format('YYYY-MM-DD');
+    });
+    this.setState({initialIndex: index});
+  };
+
+  onRegister(token) {
+    Alert.alert('Registered !', JSON.stringify(token));
+    console.log(token);
+    this.setState({registerToken: token.token, gcmRegistered: true});
+  }
+
+  onNotif(notif) {
+    console.log(notif);
+    Alert.alert(notif.title, notif.message);
+  }
+
+  renderItem = ({item}) => {
+    <AgendaItem item={item} />;
+  };
+
+  renderSeparator = () => {
+    return (
+      <View
+        style={{
+          height: 1,
+          width: '98%',
+          backgroundColor: '#CED0CE',
+          marginLeft: '1%',
+          marginRight: '1%',
+        }}
+      />
+    );
+  };
+
+  reset = async () => {
+    console.log('asd');
+    await AsyncStorage.removeItem('SelectedStartDate');
+    await AsyncStorage.removeItem('SelectedEndDate');
+    this.setState({startDate: null, endDate: null});
+    this.formatData();
+  };
+
+  render() {
+    return (
+      <View
+        style={{
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          height: '100%',
+          zIndex: 0,
+          marginTop: 20,
+        }}>
+        <Overlay
+          isVisible={this.state.showModal}
+          overlayStyle={{
+            width: '90%',
+            height: '20%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <Text style={{alignSelf: 'center', fontSize: 14}}>
+            Подождите, идет форматирование данных.
+          </Text>
+          <ActivityIndicator size="small" color="#0000ff" />
+        </Overlay>
+        <Overlay
+          isVisible={this.state.showRefreshModal}
+          overlayStyle={{
+            width: '90%',
+            height: '20%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <Text style={{alignSelf: 'center', fontSize: 14}}>
+            Подождите, идет загрузка данных.
+          </Text>
+          <ActivityIndicator size="small" color="#0000ff" />
+        </Overlay>
+        <FlatList
+          data={this.state.items}
+          renderItem={({item}) => <AgendaItem item={item} />}
+          //initialScrollIndex={this.state.initialIndex}
+          ItemSeparatorComponent={this.renderSeparator}
+          removeClippedSubviews={false}
+          onRefresh={this.refreshDataFromApi}
+          refreshing={this.state.isRefreshing}
+          getItemLayout={(item, index) => ({
+            length: 100,
+            offset: 100 * index,
+            index,
+          })}
+        />
+      </View>
+    );
+  }
+}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    paddingVertical: 50,
+    position: 'relative',
+  },
+  title: {
+    fontSize: 30,
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+  },
+  list: {
+    paddingVertical: 5,
+    margin: 3,
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    zIndex: -1,
+    height: 50,
+  },
+  lightText: {
+    color: '#000000',
+    width: '100%',
+    paddingLeft: 15,
+    fontSize: 20,
+  },
+  line: {
+    height: 0.5,
+    width: '100%',
+    backgroundColor: '#2196f3',
+  },
+  button: {
+    marginBottom: 30,
+    width: 160,
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 40,
+    borderRadius: 6,
+    backgroundColor: '#1976D2',
+  },
+  buttonTouch: {
+    textAlign: 'center',
+    padding: 20,
+    color: '#fff',
+    fontSize: 18,
+  },
+  numberBox: {
+    position: 'absolute',
+    bottom: 65,
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    left: 275,
+    zIndex: 3,
+    backgroundColor: '#e3e3e3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  number: {fontSize: 14, color: '#000'},
+  selected: {backgroundColor: '#9be7ff'},
+});

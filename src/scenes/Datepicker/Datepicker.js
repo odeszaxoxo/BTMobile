@@ -6,7 +6,7 @@ import moment from 'moment';
 
 import DatePicker from 'react-native-datepicker';
 
-export default class Store extends React.Component {
+export default class DatePickers extends React.Component {
   constructor(props) {
     super(props);
     this.state = {

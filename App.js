@@ -8,6 +8,7 @@ import SignInScreen from './src/scenes/AuthFlow/SignIn/SignInScreen';
 import AuthLoadingScreen from './src/scenes/AuthFlow/AuthLoadingScreen/AuthLoadingScreen';
 import Scenes from './src/scenes/ScenesList/ScenesList';
 import AgendaScreen from './src/scenes/Agenda/AgendaScreen';
+import AgendaList from './src/scenes/Agenda/AgendaList';
 import Settings from './src/scenes/Settings/Settings';
 import jsonData from './src/data/data1.json';
 import NotificationService from './src/services/NotificationService';
@@ -16,7 +17,7 @@ import appConfig from './app.json';
 import Datepicker from './src/scenes/Datepicker/Datepicker';
 
 const AppStack = createStackNavigator({
-  Agenda: AgendaScreen,
+  Agenda: AgendaList,
   Scenes: Scenes,
   Settings: Settings,
   Datepicker: Datepicker,
