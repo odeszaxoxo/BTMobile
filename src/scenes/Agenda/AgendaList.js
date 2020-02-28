@@ -16,6 +16,8 @@ import realm from '../../services/realm';
 import {AgendaItem} from './AgendaItem';
 import moment from 'moment';
 import NetInfo from '@react-native-community/netinfo';
+import DatePicker from 'react-native-datepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 var _ = require('lodash');
 
@@ -27,6 +29,7 @@ export default class Store extends React.Component {
       showModal: false,
       showRefreshModal: false,
       isRefreshing: false,
+      showPicker: false,
     };
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -39,14 +42,18 @@ export default class Store extends React.Component {
   }
   static navigationOptions = ({navigation}) => {
     const reset = navigation.getParam('reset', () => {});
+    const showPicker = navigation.getParam('showPicker', () => {});
     return {
       title: 'События',
+      headerTitleStyle: {
+        marginLeft: '20%',
+      },
       headerRight: () => (
         <View style={{flexDirection: 'row'}}>
           <Button
-            onPress={() => reset()}
+            onPress={() => showPicker()}
             icon={{
-              name: 'refresh',
+              name: 'calendar-today',
               type: 'material-community',
               size: 22,
               color: '#000',
@@ -87,6 +94,16 @@ export default class Store extends React.Component {
             }}
             buttonStyle={{backgroundColor: '#fff'}}
           />
+          <Button
+            onPress={() => reset()}
+            icon={{
+              name: 'refresh',
+              type: 'material-community',
+              size: 22,
+              color: '#000',
+            }}
+            buttonStyle={{backgroundColor: '#fff'}}
+          />
         </View>
       ),
     };
@@ -106,8 +123,9 @@ export default class Store extends React.Component {
 
   componentDidMount = async () => {
     this.props.navigation.setParams({reset: this.reset});
+    this.props.navigation.setParams({showPicker: this.showPicker});
     await this.getUserPrefs();
-    console.log(this.state.usertoken);
+    await this.formatData();
     this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
     this.props.navigation.addListener('didFocus', async () => {
       await this.formatData();
@@ -118,6 +136,10 @@ export default class Store extends React.Component {
     this.setState({showModal: true});
     await this.formatter();
     this.setState({showModal: false});
+  };
+
+  showPicker = () => {
+    this.setState({showPicker: true});
   };
 
   refreshDataFromApi = async () => {
@@ -333,8 +355,23 @@ export default class Store extends React.Component {
     var startDate = await AsyncStorage.getItem('SelectedStartDate');
     var endDate = await AsyncStorage.getItem('SelectedEndDate');
     var starter = new Date();
-    if (startDate !== null && endDate !== null) {
-      this.setState({startDate: startDate, endDate: endDate});
+    if (this.state.pickerDate == null) {
+      if (startDate !== null && endDate !== null) {
+        this.setState({startDate: startDate, endDate: endDate});
+      } else {
+        startDate = moment(starter).format('YYYY-MM-DDTHH:mm:ss');
+        endDate = moment(starter, 'YYYY-MM-DDTHH:mm:ss').add(3, 'days');
+        var endDateFormatted = moment(endDate).format('YYYY-MM-DDTHH:mm:ss');
+        this.setState({startDate: startDate, endDate: endDateFormatted});
+      }
+    } else {
+      let formattedDate = new Date(
+        this.state.pickerDate.replace(/(\d{2})-(\d{2})-(\d{4})/, '$2/$1/$3'),
+      );
+      startDate = moment(formattedDate).format('YYYY-MM-DDTHH:mm:ss');
+      endDate = moment(formattedDate, 'YYYY-MM-DDTHH:mm:ss').add(24, 'hours');
+      var endDateFormatted = moment(endDate).format('YYYY-MM-DDTHH:mm:ss');
+      this.setState({startDate: startDate, endDate: startDate});
     }
     if (JSON.parse(testArr) === null) {
       var arr2 = [];
@@ -348,10 +385,12 @@ export default class Store extends React.Component {
     var items = [];
     for (var id = 0; id < realm.objects('EventItem').length; id++) {
       if (arr2.includes(realm.objects('EventItem')[id].scene)) {
-        if (startDate !== null && endDate !== null) {
+        if (this.state.startDate !== null && this.state.endDate !== null) {
           if (
-            realm.objects('EventItem')[id].date >= startDate &&
-            realm.objects('EventItem')[id].date <= endDate
+            realm.objects('EventItem')[id].date >=
+              moment(this.state.startDate).format('YYYY-MM-DD') &&
+            realm.objects('EventItem')[id].date <=
+              moment(this.state.endDate).format('YYYY-MM-DD')
           ) {
             items.push(realm.objects('EventItem')[id]);
           }
@@ -388,10 +427,8 @@ export default class Store extends React.Component {
       <View
         style={{
           height: 1,
-          width: '98%',
+          width: '100%',
           backgroundColor: '#CED0CE',
-          marginLeft: '1%',
-          marginRight: '1%',
         }}
       />
     );
@@ -401,8 +438,13 @@ export default class Store extends React.Component {
     console.log('asd');
     await AsyncStorage.removeItem('SelectedStartDate');
     await AsyncStorage.removeItem('SelectedEndDate');
-    this.setState({startDate: null, endDate: null});
+    this.setState({startDate: null, endDate: null, pickerDate: null});
     this.formatData();
+  };
+
+  closePicker = async () => {
+    this.setState({showPicker: false});
+    await this.formatData();
   };
 
   render() {
@@ -445,12 +487,60 @@ export default class Store extends React.Component {
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
+        <Overlay
+          isVisible={this.state.showPicker}
+          overlayStyle={{
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+            height: 200,
+          }}>
+          <DatePicker
+            style={{width: '95%', marginTop: 10, marginBottom: 10}}
+            date={this.state.pickerDate}
+            mode="date"
+            placeholder="Выберите дату"
+            format="DD-MM-YYYY"
+            confirmBtnText="Confirm"
+            cancelBtnText="Cancel"
+            customStyles={{
+              dateIcon: {
+                position: 'absolute',
+                left: 0,
+                top: 4,
+                marginLeft: 0,
+              },
+              dateInput: {
+                marginLeft: 36,
+              },
+              // ... You can check the source to find the other keys.
+            }}
+            onDateChange={date => {
+              this.setState({pickerDate: date});
+            }}
+          />
+          <Button
+            onPress={this.closePicker}
+            title="Выбрать"
+            //disabled={}
+            buttonStyle={{
+              alignSelf: 'flex-end',
+              width: 150,
+              height: 50,
+              zIndex: 1,
+              marginRight: 20,
+              borderRadius: 50,
+            }}
+          />
+        </Overlay>
         <FlatList
           data={this.state.items}
           renderItem={({item}) => <AgendaItem item={item} />}
           //initialScrollIndex={this.state.initialIndex}
           ItemSeparatorComponent={this.renderSeparator}
           removeClippedSubviews={false}
+          keyExtractor={(item, index) => index.toString()}
           onRefresh={this.refreshDataFromApi}
           refreshing={this.state.isRefreshing}
           getItemLayout={(item, index) => ({
@@ -458,6 +548,7 @@ export default class Store extends React.Component {
             offset: 100 * index,
             index,
           })}
+          style={{marginBottom: 25}}
         />
       </View>
     );

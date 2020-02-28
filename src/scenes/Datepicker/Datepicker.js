@@ -22,7 +22,6 @@ export default class DatePickers extends React.Component {
     this.props.navigation.addListener('willFocus', async () => {
       var startDate = await AsyncStorage.getItem('SelectedStartDate');
       var endDate = await AsyncStorage.getItem('SelectedEndDate');
-      console.log(startDate, endDate);
       if (startDate !== null && endDate !== null) {
         this.setState({startDate: startDate, endDate: endDate});
       }
@@ -35,11 +34,11 @@ export default class DatePickers extends React.Component {
     const {navigation} = this.props;
     await AsyncStorage.setItem(
       'SelectedStartDate',
-      moment(this.state.startDate).format('YYYY-MM-DDTHH:mm:ss'),
+      moment(this.state.startDate).format('YYYY-MM-DDT00:00:00'),
     );
     await AsyncStorage.setItem(
       'SelectedEndDate',
-      moment(this.state.endDate).format('YYYY-MM-DDTHH:mm:ss'),
+      moment(this.state.endDate).format('YYYY-MM-DDT00:00:00'),
     );
     navigation.navigate('Agenda');
   };

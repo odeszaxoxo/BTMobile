@@ -10,6 +10,8 @@ import {
   ScrollView,
 } from 'react-native';
 import realm from '../../services/realm';
+import moment from 'moment';
+import 'moment/locale/ru';
 
 export class AgendaItem extends React.PureComponent {
   constructor(props) {
@@ -25,6 +27,8 @@ export class AgendaItem extends React.PureComponent {
 
   render() {
     const sceneName = realm.objects('Scene')[this.props.item.scene - 1].title;
+    moment.locale('ru');
+    const dateFormatted = moment(this.props.item.date).format('DD MMMM YYYY');
     return (
       <TouchableOpacity
         onPress={() => {
@@ -49,22 +53,28 @@ export class AgendaItem extends React.PureComponent {
                 : 'Нет',
           });
         }}>
-        <View style={[styles.item, {height: 100}]}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <View>
-              <Text style={styles.time}>
-                {this.props.item.date} : {this.props.item.time}
-              </Text>
-              <Text style={styles.title}>{this.props.item.title}</Text>
+        <View style={[styles.item]}>
+          <View>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <Text style={styles.date}>{dateFormatted}</Text>
+              <Text style={styles.time}>{this.props.item.time}</Text>
               <Text
                 style={{
                   fontSize: 12,
                   color: realm.objects('Scene')[this.props.item.scene - 1]
                     .color,
+                  textAlignVertical: 'bottom',
+                  minWidth: '30%',
+                  textAlign: 'right',
                 }}>
                 {sceneName}
               </Text>
             </View>
+            <Text style={styles.title}>{this.props.item.title}</Text>
           </View>
         </View>
         <Modal
@@ -162,6 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     justifyContent: 'center',
+    width: '100%',
   },
   emptyDate: {
     height: 15,
@@ -181,9 +192,16 @@ const styles = StyleSheet.create({
   time: {
     color: '#191919',
     fontSize: 14,
+    textAlignVertical: 'bottom',
+  },
+  date: {
+    fontWeight: '700',
+    fontSize: 12,
+    textAlignVertical: 'bottom',
+    color: '#90a4ae',
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
   },
   back: {
     width: '100%',
