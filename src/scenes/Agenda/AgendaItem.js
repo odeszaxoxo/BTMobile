@@ -60,8 +60,11 @@ export class AgendaItem extends React.PureComponent {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
               }}>
-              <Text style={styles.date}>{dateFormatted}</Text>
-              <Text style={styles.time}>{this.props.item.time}</Text>
+              <View
+                style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
+                <Text style={styles.date}>{dateFormatted}</Text>
+                <Text style={styles.time}>{this.props.item.time}</Text>
+              </View>
               <Text
                 style={{
                   fontSize: 12,
@@ -193,6 +196,7 @@ const styles = StyleSheet.create({
     color: '#191919',
     fontSize: 14,
     textAlignVertical: 'bottom',
+    marginLeft: 15,
   },
   date: {
     fontWeight: '700',

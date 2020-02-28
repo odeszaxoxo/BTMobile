@@ -355,7 +355,6 @@ export default class Store extends React.Component {
     var startDate = await AsyncStorage.getItem('SelectedStartDate');
     var endDate = await AsyncStorage.getItem('SelectedEndDate');
     var starter = new Date();
-    console.log(this.state.pickerDate);
     if (this.state.pickerDate == null) {
       if (startDate !== null && endDate !== null) {
         this.setState({startDate: startDate, endDate: endDate});
@@ -434,7 +433,6 @@ export default class Store extends React.Component {
   };
 
   reset = async () => {
-    console.log('asd');
     await AsyncStorage.removeItem('SelectedStartDate');
     await AsyncStorage.removeItem('SelectedEndDate');
     this.setState({startDate: null, endDate: null, pickerDate: null});
@@ -448,6 +446,9 @@ export default class Store extends React.Component {
   };
 
   render() {
+    if (_.isEmpty(this.state.items)) {
+      var empty = true;
+    }
     return (
       <View
         style={{
@@ -502,22 +503,27 @@ export default class Store extends React.Component {
             }}
           />
         )}
-        <FlatList
-          data={this.state.items}
-          renderItem={({item}) => <AgendaItem item={item} />}
-          //initialScrollIndex={this.state.initialIndex}
-          ItemSeparatorComponent={this.renderSeparator}
-          removeClippedSubviews={false}
-          keyExtractor={(item, index) => index.toString()}
-          onRefresh={this.refreshDataFromApi}
-          refreshing={this.state.isRefreshing}
-          getItemLayout={(item, index) => ({
-            length: 100,
-            offset: 100 * index,
-            index,
-          })}
-          style={{marginBottom: 25}}
-        />
+        {!empty && (
+          <FlatList
+            data={this.state.items}
+            renderItem={({item}) => <AgendaItem item={item} />}
+            //initialScrollIndex={this.state.initialIndex}
+            ItemSeparatorComponent={this.renderSeparator}
+            removeClippedSubviews={false}
+            keyExtractor={(item, index) => index.toString()}
+            onRefresh={this.refreshDataFromApi}
+            refreshing={this.state.isRefreshing}
+            getItemLayout={(item, index) => ({
+              length: 100,
+              offset: 100 * index,
+              index,
+            })}
+            style={{marginBottom: 25}}
+          />
+        )}
+        {empty && (
+          <Text style={{fontSize: 18, textAlign: 'center'}}>Нет событий</Text>
+        )}
       </View>
     );
   }
