@@ -355,6 +355,7 @@ export default class Store extends React.Component {
     var startDate = await AsyncStorage.getItem('SelectedStartDate');
     var endDate = await AsyncStorage.getItem('SelectedEndDate');
     var starter = new Date();
+    console.log(this.state.pickerDate);
     if (this.state.pickerDate == null) {
       if (startDate !== null && endDate !== null) {
         this.setState({startDate: startDate, endDate: endDate});
@@ -365,9 +366,7 @@ export default class Store extends React.Component {
         this.setState({startDate: startDate, endDate: endDateFormatted});
       }
     } else {
-      let formattedDate = new Date(
-        this.state.pickerDate.replace(/(\d{2})-(\d{2})-(\d{4})/, '$2/$1/$3'),
-      );
+      let formattedDate = new Date(this.state.pickerDate);
       startDate = moment(formattedDate).format('YYYY-MM-DDTHH:mm:ss');
       endDate = moment(formattedDate, 'YYYY-MM-DDTHH:mm:ss').add(24, 'hours');
       var endDateFormatted = moment(endDate).format('YYYY-MM-DDTHH:mm:ss');
@@ -442,9 +441,10 @@ export default class Store extends React.Component {
     this.formatData();
   };
 
-  closePicker = async () => {
-    this.setState({showPicker: false});
+  closePicker = async date => {
+    this.setState({showPicker: false, pickerDate: date});
     await this.formatData();
+    this.setState({pickerDate: null});
   };
 
   render() {
@@ -487,53 +487,21 @@ export default class Store extends React.Component {
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
-        <Overlay
-          isVisible={this.state.showPicker}
-          overlayStyle={{
-            alignSelf: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-around',
-            height: 200,
-          }}>
-          <DatePicker
-            style={{width: '95%', marginTop: 10, marginBottom: 10}}
-            date={this.state.pickerDate}
+        {this.state.showPicker && (
+          <DateTimePicker
+            value={
+              this.state.pickerDate
+                ? new Date(this.state.pickerDate)
+                : new Date()
+            }
             mode="date"
-            placeholder="Выберите дату"
-            format="DD-MM-YYYY"
-            confirmBtnText="Confirm"
-            cancelBtnText="Cancel"
-            customStyles={{
-              dateIcon: {
-                position: 'absolute',
-                left: 0,
-                top: 4,
-                marginLeft: 0,
-              },
-              dateInput: {
-                marginLeft: 36,
-              },
-              // ... You can check the source to find the other keys.
-            }}
-            onDateChange={date => {
-              this.setState({pickerDate: date});
+            is24Hour={true}
+            display="default"
+            onChange={date => {
+              this.closePicker(new Date(date.nativeEvent.timestamp));
             }}
           />
-          <Button
-            onPress={this.closePicker}
-            title="Выбрать"
-            //disabled={}
-            buttonStyle={{
-              alignSelf: 'flex-end',
-              width: 150,
-              height: 50,
-              zIndex: 1,
-              marginRight: 20,
-              borderRadius: 50,
-            }}
-          />
-        </Overlay>
+        )}
         <FlatList
           data={this.state.items}
           renderItem={({item}) => <AgendaItem item={item} />}
