@@ -26,9 +26,10 @@ export default class NotificationService {
     });
   }
 
-  scheduleNotif(testDate, title, message) {
+  scheduleNotif(testDate, title, message, notifId) {
     this.lastId++;
-    var identificator = '99' + this.lastId.toString();
+    var identificator = '99' + notifId.toString();
+    console.log(identificator);
     PushNotification.localNotificationSchedule({
       //date: new Date(Date.now() + 10 * 1000), // test time 10 sec
       date: testDate,
@@ -42,7 +43,6 @@ export default class NotificationService {
       color: 'blue', // (optional) default: system default
       vibrate: true, // (optional) default: true
       vibration: 300, // vibration length in milliseconds, ignored if vibrate=false, default: 1000
-      tag: 'some_tag', // (optional) add tag to message
       group: 'group', // (optional) add group to message
       ongoing: false, // (optional) set whether this is an "ongoing" notification
 

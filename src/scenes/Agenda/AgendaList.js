@@ -16,10 +16,12 @@ import realm from '../../services/realm';
 import {AgendaItem} from './AgendaItem';
 import moment from 'moment';
 import NetInfo from '@react-native-community/netinfo';
-import DatePicker from 'react-native-datepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 var _ = require('lodash');
+
+const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
+const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
 
 export default class Store extends React.Component {
   constructor(props) {
@@ -30,6 +32,10 @@ export default class Store extends React.Component {
       showRefreshModal: false,
       isRefreshing: false,
       showPicker: false,
+      smallTime: 'key0',
+      bigTime: 'key0',
+      bigCheck: true,
+      smallCheck: true,
     };
     this.notif = new NotificationService(
       this.onRegister.bind(this),
@@ -111,11 +117,19 @@ export default class Store extends React.Component {
 
   getUserPrefs = async () => {
     try {
+      const small = JSON.parse(await AsyncStorage.getItem('smallCheck'));
+      this.setState({smallCheck: small});
+      const big = JSON.parse(await AsyncStorage.getItem('bigCheck'));
+      this.setState({bigCheck: big});
+      const smallTime = await AsyncStorage.getItem('smallTime');
+      this.setState({smallTime: smallTime});
+      const bigTime = await AsyncStorage.getItem('bigTime');
+      this.setState({bigTime: bigTime});
       const token = JSON.parse(await AsyncStorage.getItem('userToken'));
       this.setState({usertoken: token});
       var testArr = JSON.parse(await AsyncStorage.getItem('Selected'));
       this.setState({selectedCheck: testArr});
-      return [token, testArr];
+      return [token, testArr, small, big, smallTime, bigTime];
     } catch (error) {
       console.log(error.message);
     }
@@ -134,6 +148,8 @@ export default class Store extends React.Component {
 
   formatData = async () => {
     this.setState({showModal: true});
+    await this.getUserPrefs();
+    await this.setNotifications();
     await this.formatter();
     this.setState({showModal: false});
   };
@@ -146,7 +162,7 @@ export default class Store extends React.Component {
     this.setState({showRefreshModal: true});
     await this.getModifiedEvents();
     await this.getDeletedEvents();
-    //await this.setNotifications();
+    await this.setNotifications();
     await this.formatter();
     this.setState({showRefreshModal: false});
   };
@@ -405,6 +421,118 @@ export default class Store extends React.Component {
     this.setState({initialIndex: index});
   };
 
+  setNotifications = async () => {
+    var firstDate = new Date();
+    var newMomentTime = moment(firstDate, 'YYYY-MM-DD');
+    var lastMomentTime = moment(firstDate, 'YYYY-MM-DD').add(3, 'days');
+    this.notif.cancelAll();
+    this.notifLong.cancelAll();
+    for (let i = 0; i < realm.objects('EventItem').length; i++) {
+      let getId = '99' + i.toString();
+      let getBigId = '98' + i.toString();
+      console.log(getId);
+      console.log(getBigId);
+      this.notif.cancelNotif(getId);
+      this.notif.cancelNotif({id: getId});
+      this.notifLong.cancelNotif(getBigId);
+      this.notifLong.cancelNotif({id: getBigId});
+    }
+    var registered = [];
+    var notifId = 0;
+    var notifIdLong = 0;
+    if (realm.objects('EventItem').length > 0) {
+      for (var id = 0; id < realm.objects('EventItem').length; id++) {
+        if (
+          realm.objects('EventItem')[id].date <=
+            lastMomentTime.format('YYYY-MM-DD') &&
+          realm.objects('EventItem')[id].date >=
+            newMomentTime.format('YYYY-MM-DD')
+        ) {
+          registered.push(id);
+          let result = realm.objects('EventItem')[id].time;
+          let date = realm.objects('EventItem')[id].date;
+          let startTime = date + ' ' + result.substring(0, 5) + ':00';
+          let momentDate = moment(startTime);
+          let datee = new Date(momentDate.toDate());
+          let utcDate = moment.utc(datee);
+          let title =
+            realm.objects('Scene')[realm.objects('EventItem')[id].scene - 1]
+              .title +
+            '.' +
+            ' Соб./Через';
+          let message =
+            realm.objects('EventItem')[id].title +
+            ' / ' +
+            smallItems[this.state.smallTime] +
+            ' минут.';
+          if (bigItems[this.state.bigTime] === 1) {
+            var messageLong =
+              realm.objects('EventItem')[id].title +
+              ' / ' +
+              bigItems[this.state.bigTime] +
+              ' час.';
+          } else {
+            var arr = [2, 3, 4];
+            if (arr.includes(bigItems[this.state.bigTime])) {
+              var messageLong =
+                realm.objects('EventItem')[id].title +
+                ' / ' +
+                bigItems[this.state.bigTime] +
+                ' часа';
+            } else {
+              var messageLong =
+                realm.objects('EventItem')[id].title +
+                ' / ' +
+                bigItems[this.state.bigTime] +
+                ' часов.';
+            }
+          }
+          if (
+            new Date(utcDate) >
+              new Date(
+                Date.now() + 60 * 1000 * smallItems[this.state.smallTime],
+              ) &&
+            new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
+          ) {
+            if (this.state.smallCheck === true) {
+              notifId++;
+              console.log(notifId);
+              this.notif.scheduleNotif(
+                new Date(
+                  utcDate - 60 * 1000 * smallItems[this.state.smallTime],
+                ),
+                title,
+                message,
+                notifId,
+              );
+            }
+          }
+          if (
+            new Date(utcDate) >
+              new Date(
+                Date.now() + 60 * 1000 * 60 * bigItems[this.state.bigTime],
+              ) &&
+            new Date(utcDate) < new Date(Date.now() + 60 * 1000 * 60 * 24)
+          ) {
+            if (this.state.bigCheck === true) {
+              notifIdLong++;
+              console.log(notifIdLong);
+              this.notifLong.scheduleNotif(
+                new Date(
+                  utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime],
+                ),
+                title,
+                messageLong,
+                notifIdLong,
+              );
+            }
+          }
+        }
+      }
+      this.setState({registered: registered});
+    }
+  };
+
   onRegister(token) {
     Alert.alert('Registered !', JSON.stringify(token));
     console.log(token);
@@ -442,13 +570,9 @@ export default class Store extends React.Component {
   closePicker = async date => {
     this.setState({showPicker: false, pickerDate: date});
     await this.formatData();
-    this.setState({pickerDate: null});
   };
 
   render() {
-    if (_.isEmpty(this.state.items)) {
-      var empty = true;
-    }
     return (
       <View
         style={{
@@ -503,27 +627,22 @@ export default class Store extends React.Component {
             }}
           />
         )}
-        {!empty && (
-          <FlatList
-            data={this.state.items}
-            renderItem={({item}) => <AgendaItem item={item} />}
-            //initialScrollIndex={this.state.initialIndex}
-            ItemSeparatorComponent={this.renderSeparator}
-            removeClippedSubviews={false}
-            keyExtractor={(item, index) => index.toString()}
-            onRefresh={this.refreshDataFromApi}
-            refreshing={this.state.isRefreshing}
-            getItemLayout={(item, index) => ({
-              length: 100,
-              offset: 100 * index,
-              index,
-            })}
-            style={{marginBottom: 25}}
-          />
-        )}
-        {empty && (
-          <Text style={{fontSize: 18, textAlign: 'center'}}>Нет событий</Text>
-        )}
+        <FlatList
+          data={this.state.items}
+          renderItem={({item}) => <AgendaItem item={item} />}
+          //initialScrollIndex={this.state.initialIndex}
+          ItemSeparatorComponent={this.renderSeparator}
+          removeClippedSubviews={false}
+          keyExtractor={(item, index) => index.toString()}
+          onRefresh={this.refreshDataFromApi}
+          refreshing={this.state.isRefreshing}
+          getItemLayout={(item, index) => ({
+            length: 100,
+            offset: 100 * index,
+            index,
+          })}
+          style={{marginBottom: 25}}
+        />
       </View>
     );
   }
