@@ -139,7 +139,9 @@ export default class Store extends React.Component {
     this.props.navigation.setParams({reset: this.reset});
     this.props.navigation.setParams({showPicker: this.showPicker});
     await this.getUserPrefs();
-    await this.formatData();
+    if (realm.objects('EventItem').length > 0) {
+      await this.firstOpenFormatData();
+    }
     this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
     this.props.navigation.addListener('didFocus', async () => {
       await this.formatData();
@@ -149,10 +151,17 @@ export default class Store extends React.Component {
   formatData = async () => {
     this.setState({showModal: true});
     await this.getUserPrefs();
-    await this.setNotifications();
     await this.formatter();
     this.setState({showModal: false});
   };
+
+  firstOpenFormatData = async () => {
+    this.setState({showModal: true});
+    await this.getUserPrefs();
+    await this.setNotifications();
+    await this.formatter();
+    this.setState({showModal: false});
+  }
 
   showPicker = () => {
     this.setState({showPicker: true});
