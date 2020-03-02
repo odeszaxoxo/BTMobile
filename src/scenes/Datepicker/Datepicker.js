@@ -31,6 +31,7 @@ export default class DatePickers extends React.Component {
   goToAgenda = async () => {
     await AsyncStorage.removeItem('SelectedStartDate');
     await AsyncStorage.removeItem('SelectedEndDate');
+    await AsyncStorage.removeItem('PickerDate');
     const {navigation} = this.props;
     await AsyncStorage.setItem(
       'SelectedStartDate',

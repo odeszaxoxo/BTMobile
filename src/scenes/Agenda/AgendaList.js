@@ -379,8 +379,9 @@ export default class Store extends React.Component {
     var testArr = await AsyncStorage.getItem('Selected');
     var startDate = await AsyncStorage.getItem('SelectedStartDate');
     var endDate = await AsyncStorage.getItem('SelectedEndDate');
+    var pickerDate = JSON.parse(await AsyncStorage.getItem('PickerDate'));
     var starter = new Date();
-    if (this.state.pickerDate == null) {
+    if (pickerDate == null) {
       if (startDate !== null && endDate !== null) {
         this.setState({startDate: startDate, endDate: endDate});
       } else {
@@ -390,7 +391,7 @@ export default class Store extends React.Component {
         this.setState({startDate: startDate, endDate: endDateFormatted});
       }
     } else {
-      let formattedDate = new Date(this.state.pickerDate);
+      let formattedDate = new Date(pickerDate);
       startDate = moment(formattedDate).format('YYYY-MM-DDTHH:mm:ss');
       endDate = moment(formattedDate, 'YYYY-MM-DDTHH:mm:ss').add(24, 'hours');
       var endDateFormatted = moment(endDate).format('YYYY-MM-DDTHH:mm:ss');
@@ -572,12 +573,14 @@ export default class Store extends React.Component {
   reset = async () => {
     await AsyncStorage.removeItem('SelectedStartDate');
     await AsyncStorage.removeItem('SelectedEndDate');
+    await AsyncStorage.removeItem('PickerDate');
     this.setState({startDate: null, endDate: null, pickerDate: null});
     this.formatData();
   };
 
   closePicker = async date => {
     this.setState({showPicker: false, pickerDate: date});
+    await AsyncStorage.setItem('PickerDate', JSON.stringify(date));
     await this.formatData();
   };
 
