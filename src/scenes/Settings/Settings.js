@@ -107,18 +107,6 @@ export default class SettingsScreen extends React.Component {
     await AsyncStorage.removeItem('user');
   };
 
-  _send = () => {
-    let title = 'Тестовое уведомление';
-    let message = 'Событие начнется через 30 секунд';
-    let messageLong = 'Событие начнется через час';
-    this.notif.scheduleNotif(new Date(Date.now() + 30 * 1000), title, message);
-    this.notifLong.scheduleNotif(
-      new Date(Date.now() + 30 * 1000),
-      title,
-      messageLong,
-    );
-  };
-
   onSmallCheck = async () => {
     await AsyncStorage.removeItem('smallCheck');
     this.setState({smallCheck: !this.state.smallCheck});
@@ -476,21 +464,6 @@ export default class SettingsScreen extends React.Component {
               <Picker.Item label="5 часов" value="key3" />
             </Picker>
           </Item>
-        </SectionRow>
-        <SectionRow text="Тест уведомлений">
-          <Button
-            title="Отправить уведомление"
-            iconName="exclamation"
-            onPress={this._send}
-            buttonStyle={{
-              backgroundColor: 'transparent',
-              borderWidth: 0.5,
-              borderRadius: 6,
-              borderColor: '#42a5f5',
-              margin: 5,
-            }}
-            titleStyle={{color: '#42a5f5', fontSize: 16, fontWeight: '700'}}
-          />
         </SectionRow>
         <SectionRow text="Обновить данные">
           <Text style={{marginLeft: 15, marginRight: 15, marginBottom: 15}}>

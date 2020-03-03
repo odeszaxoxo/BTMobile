@@ -171,7 +171,7 @@ export default class Store extends React.Component {
     this.setState({showRefreshModal: true});
     await this.getModifiedEvents();
     await this.getDeletedEvents();
-    await this.setNotifications();
+    //await this.setNotifications();
     await this.formatter();
     this.setState({showRefreshModal: false});
   };
@@ -226,6 +226,7 @@ export default class Store extends React.Component {
           body: testBody,
         });
         const content1 = await rawResponse1.json();
+        console.log(content1);
         if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
         } else {
           for (
@@ -268,8 +269,9 @@ export default class Store extends React.Component {
               .objects('Scene')
               .filtered('resourceId = $0', findVar)[0].id;
             if (
-              realm.objects('EventItem').filtered('serverId = $0', serverId)[0]
-                .id === undefined
+              realm
+                .objects('EventItem')
+                .filtered('serverId = $0', serverId)[0] === undefined
             ) {
               realm.write(() => {
                 realm.create(
@@ -358,6 +360,7 @@ export default class Store extends React.Component {
       body: testBody,
     });
     const content1 = await rawResponse1.json();
+    console.log(content1);
     if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
     } else {
       for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
