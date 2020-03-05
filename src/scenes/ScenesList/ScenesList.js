@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {Component} from 'react';
-import {View, AsyncStorage} from 'react-native';
+import {View, AsyncStorage, Image, Text} from 'react-native';
 import SelectMultiple from 'react-native-select-multiple';
 import {isEmpty} from 'lodash';
 import realm from '../../services/realm';
@@ -53,6 +53,7 @@ class ScenesList extends Component {
       var item = {
         label: realm.objects('Scene')[i].title,
         value: realm.objects('Scene')[i].id,
+        color: realm.objects('Scene')[i].color,
       };
       list.push(item);
     }
@@ -81,6 +82,28 @@ class ScenesList extends Component {
     }
     await AsyncStorage.setItem('Selected', JSON.stringify(selectedList));
     navigation.navigate('Agenda');
+  };
+
+  renderLabel = label => {
+    const col = this.state.scenes.find(item => {
+      return item.label === label;
+    });
+    return (
+      <View
+        style={{flexDirection: 'row', alignItems: 'center', height: '100%'}}>
+        <View
+          style={{
+            marginLeft: 10,
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            width: '95%',
+            alignItems: 'center',
+          }}>
+          <View style={{height: 45, width: 10, backgroundColor: col.color}} />
+          <Text style={{marginLeft: 10}}>{label}</Text>
+        </View>
+      </View>
+    );
   };
 
   render() {
@@ -122,7 +145,9 @@ class ScenesList extends Component {
             items={this.state.scenes}
             selectedItems={this.state.selectedScenes}
             onSelectionsChange={this.onSelectionsChange}
-            style={{zIndex: 0}}
+            style={{zIndex: 0, height: '90%'}}
+            rowStyle={{height: 45}}
+            renderLabel={this.renderLabel}
           />
         </View>
         <Button
@@ -131,7 +156,7 @@ class ScenesList extends Component {
           disabled={isEmpty(this.state.selectedScenes) ? true : false}
           buttonStyle={{
             position: 'absolute',
-            bottom: 90,
+            bottom: 20,
             right: 20,
             width: 150,
             height: 50,

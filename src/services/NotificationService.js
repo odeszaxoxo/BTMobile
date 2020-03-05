@@ -29,7 +29,6 @@ export default class NotificationService {
   scheduleNotif(testDate, title, message, notifId) {
     this.lastId++;
     var identificator = '99' + notifId.toString();
-    console.log(identificator);
     PushNotification.localNotificationSchedule({
       //date: new Date(Date.now() + 10 * 1000), // test time 10 sec
       date: testDate,

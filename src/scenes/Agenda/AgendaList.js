@@ -8,6 +8,7 @@ import {
   AsyncStorage,
   Text,
   ActivityIndicator,
+  Icon,
 } from 'react-native';
 import {Button, Overlay} from 'react-native-elements';
 import NotificationService from '../../services/NotificationService';
@@ -17,6 +18,7 @@ import {AgendaItem} from './AgendaItem';
 import moment from 'moment';
 import NetInfo from '@react-native-community/netinfo';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AwesomeIcon from 'react-native-vector-icons/FontAwesome5';
 
 var _ = require('lodash');
 
@@ -49,6 +51,12 @@ export default class Store extends React.Component {
   static navigationOptions = ({navigation}) => {
     const reset = navigation.getParam('reset', () => {});
     const showPicker = navigation.getParam('showPicker', () => {});
+    const firstIcon = (
+      <AwesomeIcon name="calendar-day" size={22} color="#000" />
+    );
+    const secondIcon = (
+      <AwesomeIcon name="calendar-week" size={22} color="#00" />
+    );
     return {
       title: 'События',
       headerTitleStyle: {
@@ -58,22 +66,12 @@ export default class Store extends React.Component {
         <View style={{flexDirection: 'row'}}>
           <Button
             onPress={() => showPicker()}
-            icon={{
-              name: 'calendar-today',
-              type: 'material-community',
-              size: 22,
-              color: '#000',
-            }}
+            icon={firstIcon}
             buttonStyle={{backgroundColor: '#fff'}}
           />
           <Button
             onPress={() => navigation.navigate('Datepicker')}
-            icon={{
-              name: 'calendar-today',
-              type: 'material-community',
-              size: 22,
-              color: '#000',
-            }}
+            icon={secondIcon}
             buttonStyle={{backgroundColor: '#fff'}}
           />
           <Button
@@ -103,7 +101,7 @@ export default class Store extends React.Component {
           <Button
             onPress={() => reset()}
             icon={{
-              name: 'refresh',
+              name: 'home-outline',
               type: 'material-community',
               size: 22,
               color: '#000',
@@ -161,7 +159,7 @@ export default class Store extends React.Component {
     await this.setNotifications();
     await this.formatter();
     this.setState({showModal: false});
-  }
+  };
 
   showPicker = () => {
     this.setState({showPicker: true});
@@ -443,8 +441,6 @@ export default class Store extends React.Component {
     for (let i = 0; i < realm.objects('EventItem').length; i++) {
       let getId = '99' + i.toString();
       let getBigId = '98' + i.toString();
-      console.log(getId);
-      console.log(getBigId);
       this.notif.cancelNotif(getId);
       this.notif.cancelNotif({id: getId});
       this.notifLong.cancelNotif(getBigId);
@@ -509,7 +505,6 @@ export default class Store extends React.Component {
           ) {
             if (this.state.smallCheck === true) {
               notifId++;
-              console.log(notifId);
               this.notif.scheduleNotif(
                 new Date(
                   utcDate - 60 * 1000 * smallItems[this.state.smallTime],
@@ -529,7 +524,6 @@ export default class Store extends React.Component {
           ) {
             if (this.state.bigCheck === true) {
               notifIdLong++;
-              console.log(notifIdLong);
               this.notifLong.scheduleNotif(
                 new Date(
                   utcDate - 60 * 1000 * 60 * bigItems[this.state.bigTime],
@@ -568,8 +562,17 @@ export default class Store extends React.Component {
           height: 1,
           width: '100%',
           backgroundColor: '#CED0CE',
+          margin: 0,
         }}
       />
+    );
+  };
+
+  _listEmptyComponent = () => {
+    return (
+      <View>
+        <Text style={{alignSelf: 'center'}}>Нет событий</Text>
+      </View>
     );
   };
 
@@ -648,14 +651,10 @@ export default class Store extends React.Component {
           //initialScrollIndex={this.state.initialIndex}
           ItemSeparatorComponent={this.renderSeparator}
           removeClippedSubviews={false}
+          ListEmptyComponent={this._listEmptyComponent}
           keyExtractor={(item, index) => index.toString()}
           onRefresh={this.refreshDataFromApi}
           refreshing={this.state.isRefreshing}
-          getItemLayout={(item, index) => ({
-            length: 100,
-            offset: 100 * index,
-            index,
-          })}
           style={{marginBottom: 25}}
         />
       </View>

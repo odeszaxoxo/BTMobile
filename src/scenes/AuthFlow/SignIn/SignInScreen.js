@@ -26,6 +26,7 @@ export default class SignInScreen extends React.Component {
       list: [],
       correct: 'none',
       showModal: false,
+      showLoginModal: false,
     };
   }
   static navigationOptions = {
@@ -81,7 +82,7 @@ export default class SignInScreen extends React.Component {
             <View style={styles.loginButtonContainer}>
               <Button
                 title="Войти!"
-                onPress={this._signInAsync}
+                onPress={this.signInFlow}
                 buttonStyle={{backgroundColor: '#1E151A'}}
               />
               <Text
@@ -113,6 +114,21 @@ export default class SignInScreen extends React.Component {
           }}>
           <Text style={{alignSelf: 'center', fontSize: 16}}>
             Подождите, идет первоначальная загрузка данных.
+          </Text>
+          <ActivityIndicator size="small" color="#0000ff" />
+        </Overlay>
+        <Overlay
+          isVisible={this.state.showLoginModal}
+          overlayStyle={{
+            width: '90%',
+            height: '20%',
+            alignSelf: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+          }}>
+          <Text style={{alignSelf: 'center', fontSize: 16}}>
+            Подождите, идет проверка данных.
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
@@ -314,6 +330,12 @@ export default class SignInScreen extends React.Component {
     this.setState({showModal: true});
     await this.fetchData(testBody);
     this.setState({showModal: false});
+  };
+
+  signInFlow = async () => {
+    this.setState({showLoginModal: true});
+    await this._signInAsync();
+    this.setState({showLoginModal: false});
   };
 
   _signInAsync = async () => {

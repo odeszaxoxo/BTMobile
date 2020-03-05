@@ -28,7 +28,12 @@ export class AgendaItem extends React.PureComponent {
   render() {
     const sceneName = realm.objects('Scene')[this.props.item.scene - 1].title;
     moment.locale('ru');
-    const dateFormatted = moment(this.props.item.date).format('DD MMMM YYYY');
+    const dateFormatted = moment(this.props.item.date).format('D MMMM');
+    const startTime = this.props.item.time.substring(0, 5);
+    const endTimeForm = this.props.item.time.substring(
+      this.props.item.time.length,
+      this.props.item.time.length - 5,
+    );
     return (
       <TouchableOpacity
         onPress={() => {
@@ -54,30 +59,43 @@ export class AgendaItem extends React.PureComponent {
           });
         }}>
         <View style={[styles.item]}>
-          <View>
+          <View style={{flex: 1, flexDirection: 'column', width: '15%'}}>
+            <Text style={styles.time}>{startTime}</Text>
+            <Text style={styles.timeEnd}>{endTimeForm}</Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: realm.objects('Scene')[this.props.item.scene - 1]
+                .color,
+              width: '2%',
+              height: '100%',
+            }}
+          />
+          <View
+            style={{
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              width: '83%',
+              marginLeft: '1%',
+            }}>
+            <Text style={styles.title}>{this.props.item.title}</Text>
             <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
               }}>
-              <View
-                style={{flexDirection: 'row', justifyContent: 'flex-start'}}>
-                <Text style={styles.date}>{dateFormatted}</Text>
-                <Text style={styles.time}>{this.props.item.time}</Text>
-              </View>
               <Text
                 style={{
                   fontSize: 12,
                   color: realm.objects('Scene')[this.props.item.scene - 1]
                     .color,
                   textAlignVertical: 'bottom',
-                  minWidth: '30%',
                   textAlign: 'right',
                 }}>
                 {sceneName}
               </Text>
+              <Text style={styles.date}>{dateFormatted}</Text>
             </View>
-            <Text style={styles.title}>{this.props.item.title}</Text>
           </View>
         </View>
         <Modal
@@ -172,9 +190,9 @@ const styles = StyleSheet.create({
   item: {
     backgroundColor: 'white',
     flex: 1,
+    flexDirection: 'row',
     borderRadius: 5,
-    padding: 10,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     width: '100%',
   },
   emptyDate: {
@@ -198,14 +216,21 @@ const styles = StyleSheet.create({
     textAlignVertical: 'bottom',
     marginLeft: 15,
   },
+  timeEnd: {
+    color: '#a7c0cd',
+    fontSize: 14,
+    textAlignVertical: 'bottom',
+    marginLeft: 15,
+  },
   date: {
     fontWeight: '700',
     fontSize: 12,
     textAlignVertical: 'bottom',
     color: '#90a4ae',
+    marginRight: 10,
   },
   title: {
-    fontSize: 18,
+    fontSize: 14,
   },
   back: {
     width: '100%',
