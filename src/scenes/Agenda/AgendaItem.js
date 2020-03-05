@@ -106,7 +106,16 @@ export class AgendaItem extends React.PureComponent {
                 }}>
                 {sceneName}
               </Text>
-              <Text style={styles.date}>{dateFormatted}</Text>
+              <Text
+                style={{
+                  fontWeight: '700',
+                  fontSize: 12,
+                  textAlignVertical: 'bottom',
+                  color: '#90a4ae',
+                  marginRight: 10,
+                }}>
+                {dateFormatted}
+              </Text>
             </View>
           </View>
         </View>
@@ -152,10 +161,10 @@ export class AgendaItem extends React.PureComponent {
                   width: '100%',
                   height: '80%',
                 }}>
-                <ScrollView style={{paddingLeft: 30, paddingRight: 30}}>
+                <ScrollView style={{paddingLeft: 15, paddingRight: 15}}>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginBottom: 15,
                       color: '#424242',
                       fontWeight: '700',
@@ -186,7 +195,7 @@ export class AgendaItem extends React.PureComponent {
                         <Text
                           style={{
                             textAlignVertical: 'bottom',
-                            fontSize: 16,
+                            fontSize: 15,
                             color: '#424242',
                             fontWeight: '700',
                           }}>
@@ -194,7 +203,7 @@ export class AgendaItem extends React.PureComponent {
                         </Text>
                         <Text
                           style={{
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: '700',
                             color: realm.objects('Scene')[
                               this.props.item.scene - 1
@@ -207,7 +216,7 @@ export class AgendaItem extends React.PureComponent {
                     <Text
                       style={{
                         fontWeight: '700',
-                        fontSize: 16,
+                        fontSize: 15,
                         color: '#90a4ae',
                         marginRight: 10,
                       }}>
@@ -216,7 +225,7 @@ export class AgendaItem extends React.PureComponent {
                   </View>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginTop: 25,
                       fontWeight: 'bold',
                       color: '#FF9800',
@@ -225,7 +234,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginBottom: 15,
                       color: '#424242',
                       fontWeight: 'bold',
@@ -234,7 +243,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 'bold',
                       color: '#FF9800',
                     }}>
@@ -242,7 +251,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginBottom: 15,
                       color: '#424242',
                       fontWeight: 'bold',
@@ -251,7 +260,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 'bold',
                       color: '#FF9800',
                     }}>
@@ -259,7 +268,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginBottom: 15,
                       color: '#424242',
                       fontWeight: 'bold',
@@ -268,7 +277,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 'bold',
                       color: '#FF9800',
                     }}>
@@ -276,7 +285,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginBottom: 15,
                       color: '#424242',
                       fontWeight: 'bold',
@@ -285,7 +294,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 'bold',
                       color: '#FF9800',
                     }}>
@@ -293,7 +302,7 @@ export class AgendaItem extends React.PureComponent {
                   </Text>
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       marginBottom: 15,
                       color: '#424242',
                       fontWeight: 'bold',
@@ -364,7 +373,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 14,
     textAlignVertical: 'bottom',
     color: '#90a4ae',
     marginRight: 10,
