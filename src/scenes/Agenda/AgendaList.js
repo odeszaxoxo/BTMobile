@@ -571,7 +571,7 @@ export default class Store extends React.Component {
   _listEmptyComponent = () => {
     return (
       <View>
-        <Text style={{alignSelf: 'center'}}>Нет событий</Text>
+        <Text style={{alignSelf: 'center', marginTop: 20}}>Нет событий</Text>
       </View>
     );
   };
@@ -588,6 +588,31 @@ export default class Store extends React.Component {
     this.setState({showPicker: false, pickerDate: date});
     await AsyncStorage.setItem('PickerDate', JSON.stringify(date));
     await this.formatData();
+    // let savedDate = await AsyncStorage.getItem('PickerDate');
+    // let xd = savedDate.substring(0, savedDate.length - 6).substring(0, 1);
+    // console.log(xd + 'Z');
+    // let dateFormatted = new Date(date.nativeEvent.timestamp);
+    // let testDate = dateFormatted;
+    // if (event !== undefined) {
+    //   testDate = dateFormatted;
+    //   this.setState({showPicker: false, pickerDate: dateFormatted});
+    //   console.log(testDate, 'nanan');
+    // } else if (savedDate !== null) {
+    //   testDate = savedDate;
+    //   this.setState({showPicker: false, pickerDate: savedDate});
+    //   console.log('close', moment(testDate));
+    // } else {
+    //   testDate = null;
+    //   this.setState({showPicker: false, pickerDate: new Date()});
+    //   console.log('close new', testDate);
+    // }
+    // console.log(testDate, 'saved', this.state.pickerDate);
+    // await AsyncStorage.removeItem('PickerDate');
+    // await AsyncStorage.setItem(
+    //   'PickerDate',
+    //   testDate !== null ? JSON.stringify(testDate) : testDate,
+    // );
+    // await this.formatData();
   };
 
   render() {
@@ -655,7 +680,7 @@ export default class Store extends React.Component {
           keyExtractor={(item, index) => index.toString()}
           onRefresh={this.refreshDataFromApi}
           refreshing={this.state.isRefreshing}
-          style={{marginBottom: 25}}
+          style={{marginBottom: 25, marginTop: -18}}
         />
       </View>
     );

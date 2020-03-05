@@ -64,18 +64,14 @@ export default class SettingsScreen extends React.Component {
 
   onSmallValueChange = async value => {
     this.setState({
-      selectedShort: value,
+      smallTime: value,
     });
-    await AsyncStorage.removeItem('smallTime');
-    await AsyncStorage.setItem('smallTime', value);
   };
 
   onBigValueChange = async value => {
     this.setState({
-      selectedLong: value,
+      bigTime: value,
     });
-    await AsyncStorage.removeItem('bigTime');
-    await AsyncStorage.setItem('bigTime', value);
   };
 
   setNotifications = async () => {
@@ -219,18 +215,11 @@ export default class SettingsScreen extends React.Component {
   };
 
   onSmallCheck = async () => {
-    await AsyncStorage.removeItem('smallCheck');
     this.setState({smallCheck: !this.state.smallCheck});
-    await AsyncStorage.setItem(
-      'smallCheck',
-      JSON.stringify(this.state.smallCheck),
-    );
   };
 
   onBigCheck = async () => {
-    await AsyncStorage.removeItem('bigCheck');
     this.setState({bigCheck: !this.state.bigCheck});
-    await AsyncStorage.setItem('bigCheck', JSON.stringify(this.state.bigCheck));
   };
 
   onRegister = token => {
@@ -444,6 +433,17 @@ export default class SettingsScreen extends React.Component {
 
   saveSettings = async () => {
     this.setState({showSecondModal: true});
+    await AsyncStorage.removeItem('smallTime');
+    await AsyncStorage.setItem('smallTime', this.state.smallTime);
+    await AsyncStorage.removeItem('bigTime');
+    await AsyncStorage.setItem('bigTime', this.state.bigTime);
+    await AsyncStorage.removeItem('smallCheck');
+    await AsyncStorage.setItem(
+      'smallCheck',
+      JSON.stringify(this.state.smallCheck),
+    );
+    await AsyncStorage.removeItem('bigCheck');
+    await AsyncStorage.setItem('bigCheck', JSON.stringify(this.state.bigCheck));
     await this.setNotifications();
     this.setState({showSecondModal: false});
   };
@@ -543,7 +543,16 @@ export default class SettingsScreen extends React.Component {
             </View>
           </View>
         </View>
-        <SectionRow text="Уведомления перед началом">
+        <SectionRow text="Настройка уведомлений">
+          <Text
+            style={{
+              fontSize: 14,
+              marginLeft: '2%',
+              fontWeight: '700',
+              marginBottom: 10,
+            }}>
+            Уведомления незадолго до события
+          </Text>
           <SwitchRow
             text="Включить"
             iconName="toggle-on"
@@ -572,8 +581,16 @@ export default class SettingsScreen extends React.Component {
               <Picker.Item label="30 минут" value="key3" />
             </Picker>
           </Item>
-        </SectionRow>
-        <SectionRow text="Уведомления задолго">
+          <Text
+            style={{
+              fontSize: 14,
+              marginLeft: '2%',
+              fontWeight: '700',
+              marginBottom: 10,
+              marginTop: 20,
+            }}>
+            Уведомления задолго до события
+          </Text>
           <SwitchRow
             text="Включить"
             iconName="toggle-on"

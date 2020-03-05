@@ -43,23 +43,35 @@ export class AgendaItem extends React.PureComponent {
             selectedScene: sceneName,
             selectedText: this.props.item.title,
             selectedAlerted:
-              this.props.item.alerted !== '' ? this.props.item.alerted : 'Нет',
+              this.props.item.alerted !== ''
+                ? this.props.item.alerted.split(';').join('\n')
+                : 'Нет',
             selectedOuter:
-              this.props.item.outer !== '' ? this.props.item.outer : 'Нет',
+              this.props.item.outer !== ''
+                ? this.props.item.outer.split(';').join('\n')
+                : 'Нет',
             selectedTroups:
-              this.props.item.troups !== '' ? this.props.item.troups : 'Нет',
+              this.props.item.troups !== ''
+                ? this.props.item.troups.split(';').join('\n')
+                : 'Нет',
             selectedRequired:
               this.props.item.required !== ''
-                ? this.props.item.required
+                ? this.props.item.required.split(';').join('\n')
                 : 'Нет',
             selectedConductor:
               this.props.item.conductor !== ''
-                ? this.props.item.conductor
+                ? this.props.item.conductor.split(';').join('\n')
                 : 'Нет',
           });
         }}>
         <View style={[styles.item]}>
-          <View style={{flex: 1, flexDirection: 'column', width: '15%'}}>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'column',
+              width: '15%',
+              alignItems: 'center',
+            }}>
             <Text style={styles.time}>{startTime}</Text>
             <Text style={styles.timeEnd}>{endTimeForm}</Text>
           </View>
@@ -116,6 +128,8 @@ export class AgendaItem extends React.PureComponent {
                 height: '80%',
                 backgroundColor: 'white',
                 borderRadius: 6,
+                flexDirection: 'column',
+                alignContent: 'center',
               }}>
               <View
                 style={{
@@ -125,12 +139,12 @@ export class AgendaItem extends React.PureComponent {
                 }}>
                 <Text
                   style={{
-                    fontSize: 25,
-                    color: 'black',
-                    fontWeight: '600',
-                    paddingLeft: 20,
+                    fontSize: 16,
+                    color: '#424242',
+                    fontWeight: '700',
+                    textAlign: 'center',
                   }}>
-                  Информация
+                  Событие
                 </Text>
               </View>
               <View
@@ -139,29 +153,152 @@ export class AgendaItem extends React.PureComponent {
                   height: '80%',
                 }}>
                 <ScrollView style={{paddingLeft: 30, paddingRight: 30}}>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Название : {this.state.selectedText}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginBottom: 15,
+                      color: '#424242',
+                      fontWeight: '700',
+                      textAlign: 'left',
+                    }}>
+                    {this.state.selectedText}
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Время проведения : {this.state.selectedTime}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'flex-start',
+                      }}>
+                      <View
+                        style={{
+                          backgroundColor: realm.objects('Scene')[
+                            this.props.item.scene - 1
+                          ].color,
+                          width: 10,
+                          height: '100%',
+                        }}
+                      />
+                      <View style={{flexDirection: 'column', marginLeft: 5}}>
+                        <Text
+                          style={{
+                            textAlignVertical: 'bottom',
+                            fontSize: 16,
+                            color: '#424242',
+                            fontWeight: '700',
+                          }}>
+                          {this.state.selectedTime}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            fontWeight: '700',
+                            color: realm.objects('Scene')[
+                              this.props.item.scene - 1
+                            ].color,
+                          }}>
+                          {this.state.selectedScene}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text
+                      style={{
+                        fontWeight: '700',
+                        fontSize: 16,
+                        color: '#90a4ae',
+                        marginRight: 10,
+                      }}>
+                      {dateFormatted}
+                    </Text>
+                  </View>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginTop: 25,
+                      fontWeight: 'bold',
+                      color: '#FF9800',
+                    }}>
+                    Дирижер:
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Сцена : {this.state.selectedScene}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginBottom: 15,
+                      color: '#424242',
+                      fontWeight: 'bold',
+                    }}>
+                    {this.state.selectedConductor}
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Дирижер : {this.state.selectedConductor}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#FF9800',
+                    }}>
+                    Труппы:
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Труппы : {this.state.selectedTroups}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginBottom: 15,
+                      color: '#424242',
+                      fontWeight: 'bold',
+                    }}>
+                    {this.state.selectedTroups}
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Оповещаемые : {this.state.selectedAlerted}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#FF9800',
+                    }}>
+                    Оповещаемые:
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Внешние участники : {this.state.selectedOuter}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginBottom: 15,
+                      color: '#424242',
+                      fontWeight: 'bold',
+                    }}>
+                    {this.state.selectedAlerted}
                   </Text>
-                  <Text style={{fontSize: 18, marginBottom: 15}}>
-                    Обязательные участники : {this.state.selectedRequired}
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#FF9800',
+                    }}>
+                    Внешние участники:
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginBottom: 15,
+                      color: '#424242',
+                      fontWeight: 'bold',
+                    }}>
+                    {this.state.selectedOuter}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#FF9800',
+                    }}>
+                    Обязательные участники:
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      marginBottom: 15,
+                      color: '#424242',
+                      fontWeight: 'bold',
+                    }}>
+                    {this.state.selectedRequired}
                   </Text>
                 </ScrollView>
               </View>
@@ -169,12 +306,15 @@ export class AgendaItem extends React.PureComponent {
                 onPress={() => {
                   this.setModalVisible(!this.state.modalVisible);
                 }}
+                underlayColor="transparent"
                 style={{
-                  width: '100%',
-                  height: '5%',
+                  alignSelf: 'flex-end',
+                  width: '50%',
+                  height: '10%',
                   justifyContent: 'center',
                   alignItems: 'flex-end',
-                  marginTop: 20,
+                  marginTop: 0,
+                  borderRadius: 12,
                 }}>
                 <Text style={{fontSize: 16, marginRight: 20}}>Закрыть</Text>
               </TouchableHighlight>
@@ -224,7 +364,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: 16,
     textAlignVertical: 'bottom',
     color: '#90a4ae',
     marginRight: 10,
