@@ -603,13 +603,13 @@ export default class Store extends React.Component {
 
   closePicker = async (date, event) => {
     let savedDate = await AsyncStorage.getItem('PickerDate');
-    let formatter = savedDate.substring(0, savedDate.length - 6);
     let dateFormatted = new Date(date.nativeEvent.timestamp);
     let testDate = dateFormatted;
     if (event !== undefined) {
       testDate = dateFormatted;
       this.setState({showPicker: false, pickerDate: dateFormatted});
-    } else if (savedDate !== null) {
+    } else if (savedDate !== null && savedDate !== undefined) {
+      let formatter = savedDate.substring(0, savedDate.length - 6);
       testDate = new Date(formatter.substring(1) + 'Z');
       this.setState({showPicker: false, pickerDate: testDate});
     } else {
