@@ -55,7 +55,7 @@ export default class Store extends React.Component {
       <AwesomeIcon name="calendar-day" size={22} color="#000" />
     );
     const secondIcon = (
-      <AwesomeIcon name="calendar-week" size={22} color="#00" />
+      <AwesomeIcon name="calendar-week" size={22} color="#000" />
     );
     return {
       title: 'События',
@@ -127,7 +127,9 @@ export default class Store extends React.Component {
       this.setState({usertoken: token});
       var testArr = JSON.parse(await AsyncStorage.getItem('Selected'));
       this.setState({selectedCheck: testArr});
-      return [token, testArr, small, big, smallTime, bigTime];
+      const prodCheck = JSON.parse(await AsyncStorage.getItem('development'));
+      this.setState({prodCheck: prodCheck});
+      return [token, testArr, small, big, smallTime, bigTime, prodCheck];
     } catch (error) {
       console.log(error.message);
     }
@@ -136,7 +138,6 @@ export default class Store extends React.Component {
   componentDidMount = async () => {
     this.props.navigation.setParams({reset: this.reset});
     this.props.navigation.setParams({showPicker: this.showPicker});
-    await this.getUserPrefs();
     if (realm.objects('EventItem').length > 0) {
       await this.firstOpenFormatData();
     }
@@ -156,6 +157,8 @@ export default class Store extends React.Component {
   firstOpenFormatData = async () => {
     this.setState({showModal: true});
     await this.getUserPrefs();
+    await this.getModifiedEvents();
+    await this.getDeletedEvents();
     await this.setNotifications();
     await this.formatter();
     this.setState({showModal: false});
@@ -169,13 +172,18 @@ export default class Store extends React.Component {
     this.setState({showRefreshModal: true});
     await this.getModifiedEvents();
     await this.getDeletedEvents();
-    //await this.setNotifications();
+    await this.setNotifications();
     await this.formatter();
     this.setState({showRefreshModal: false});
   };
 
   getModifiedEvents = async () => {
     var testBody = this.state.usertoken;
+    if (this.state.prodCheck) {
+      var port = '8050';
+    } else {
+      port = '8051';
+    }
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('ModifiedRefresh'),
     );
@@ -195,7 +203,9 @@ export default class Store extends React.Component {
     NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -211,7 +221,9 @@ export default class Store extends React.Component {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
         }
         let urlTest =
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
+          'https://calendar.bolshoi.ru:' +
+          port +
+          '/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
           moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
           '/' +
           moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
@@ -224,7 +236,6 @@ export default class Store extends React.Component {
           body: testBody,
         });
         const content1 = await rawResponse1.json();
-        console.log(content1);
         if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
         } else {
           for (
@@ -328,6 +339,11 @@ export default class Store extends React.Component {
 
   getDeletedEvents = async () => {
     var testBody = this.state.usertoken;
+    if (this.state.prodCheck) {
+      var port = '8050';
+    } else {
+      port = '8051';
+    }
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('ModifiedRefresh'),
     );
@@ -345,7 +361,9 @@ export default class Store extends React.Component {
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
     let urlTest =
-      'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
+      'https://calendar.bolshoi.ru:' +
+      port +
+      '/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
       moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
       '/' +
       moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
@@ -358,7 +376,6 @@ export default class Store extends React.Component {
       body: testBody,
     });
     const content1 = await rawResponse1.json();
-    console.log(content1);
     if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
     } else {
       for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
@@ -584,35 +601,27 @@ export default class Store extends React.Component {
     this.formatData();
   };
 
-  closePicker = async date => {
-    this.setState({showPicker: false, pickerDate: date});
-    await AsyncStorage.setItem('PickerDate', JSON.stringify(date));
+  closePicker = async (date, event) => {
+    let savedDate = await AsyncStorage.getItem('PickerDate');
+    let formatter = savedDate.substring(0, savedDate.length - 6);
+    let dateFormatted = new Date(date.nativeEvent.timestamp);
+    let testDate = dateFormatted;
+    if (event !== undefined) {
+      testDate = dateFormatted;
+      this.setState({showPicker: false, pickerDate: dateFormatted});
+    } else if (savedDate !== null) {
+      testDate = new Date(formatter.substring(1) + 'Z');
+      this.setState({showPicker: false, pickerDate: testDate});
+    } else {
+      testDate = null;
+      this.setState({showPicker: false, pickerDate: new Date()});
+    }
+    await AsyncStorage.removeItem('PickerDate');
+    await AsyncStorage.setItem(
+      'PickerDate',
+      testDate !== null ? JSON.stringify(testDate) : testDate,
+    );
     await this.formatData();
-    // let savedDate = await AsyncStorage.getItem('PickerDate');
-    // let xd = savedDate.substring(0, savedDate.length - 6).substring(0, 1);
-    // console.log(xd + 'Z');
-    // let dateFormatted = new Date(date.nativeEvent.timestamp);
-    // let testDate = dateFormatted;
-    // if (event !== undefined) {
-    //   testDate = dateFormatted;
-    //   this.setState({showPicker: false, pickerDate: dateFormatted});
-    //   console.log(testDate, 'nanan');
-    // } else if (savedDate !== null) {
-    //   testDate = savedDate;
-    //   this.setState({showPicker: false, pickerDate: savedDate});
-    //   console.log('close', moment(testDate));
-    // } else {
-    //   testDate = null;
-    //   this.setState({showPicker: false, pickerDate: new Date()});
-    //   console.log('close new', testDate);
-    // }
-    // console.log(testDate, 'saved', this.state.pickerDate);
-    // await AsyncStorage.removeItem('PickerDate');
-    // await AsyncStorage.setItem(
-    //   'PickerDate',
-    //   testDate !== null ? JSON.stringify(testDate) : testDate,
-    // );
-    // await this.formatData();
   };
 
   render() {
@@ -665,15 +674,14 @@ export default class Store extends React.Component {
             mode="date"
             is24Hour={true}
             display="default"
-            onChange={date => {
-              this.closePicker(new Date(date.nativeEvent.timestamp));
+            onChange={(date, event) => {
+              this.closePicker(date, event);
             }}
           />
         )}
         <FlatList
           data={this.state.items}
           renderItem={({item}) => <AgendaItem item={item} />}
-          //initialScrollIndex={this.state.initialIndex}
           ItemSeparatorComponent={this.renderSeparator}
           removeClippedSubviews={false}
           ListEmptyComponent={this._listEmptyComponent}

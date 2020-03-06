@@ -7,6 +7,7 @@ import {
   ImageBackground,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import {Button, Input, Icon, Text, Overlay} from 'react-native-elements';
 import login from '../../../images/login.jpg.png';
@@ -27,11 +28,14 @@ export default class SignInScreen extends React.Component {
       correct: 'none',
       showModal: false,
       showLoginModal: false,
+      prodCheck: true,
     };
   }
   static navigationOptions = {
     title: '',
   };
+
+  prodCheckHandler = () => [this.setState({prodCheck: !this.state.prodCheck})];
 
   render() {
     return (
@@ -44,6 +48,18 @@ export default class SignInScreen extends React.Component {
             justifyContent: 'space-around',
             flex: 1,
           }}>
+          <View
+            style={{
+              width: '95%',
+              justifyContent: 'flex-end',
+              marginTop: 40,
+            }}>
+            <Switch
+              value={this.state.prodCheck}
+              onChange={this.prodCheckHandler}
+              trackColor={{false: '#484848', true: '#212121'}}
+            />
+          </View>
           <View style={styles.loginForm}>
             <View style={styles.input}>
               <Input
@@ -98,7 +114,14 @@ export default class SignInScreen extends React.Component {
           </View>
         </KeyboardAvoidingView>
         <View style={styles.credentials}>
-          <Text h4 h4Style={{color: '#fff', fontSize: 10, fontWeight: '200'}}>
+          <Text
+            h4
+            h4Style={{
+              color: '#fff',
+              fontSize: 10,
+              fontWeight: '200',
+              marginBottom: 20,
+            }}>
             Powered by Adamcode
           </Text>
         </View>
@@ -149,10 +172,17 @@ export default class SignInScreen extends React.Component {
 
   fetchData = async testBody => {
     var testArr = [];
+    if (this.state.prodCheck) {
+      var port = '8050';
+    } else {
+      port = '8051';
+    }
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponseScenes = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -218,7 +248,9 @@ export default class SignInScreen extends React.Component {
         this.state.usertoken !== null
       ) {
         let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -241,17 +273,10 @@ export default class SignInScreen extends React.Component {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
         }
         for (var l = 0; l < scenesArr.length; l++) {
-          console.log(
-            l,
-            'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
-              scenesArr[l] +
-              '/' +
-              moment(this.state.endTime).format('YYYY-MM-DDTHH:mm:ss') +
-              '/' +
-              moment(this.state.startTime).format('YYYY-MM-DDTHH:mm:ss'),
-          );
           let urlTest =
-            'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
+            'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetEventsByPeriod/' +
             scenesArr[l] +
             '/' +
             moment(this.state.endTime).format('YYYY-MM-DDTHH:mm:ss') +
@@ -339,6 +364,15 @@ export default class SignInScreen extends React.Component {
   };
 
   _signInAsync = async () => {
+    await AsyncStorage.setItem(
+      'development',
+      JSON.stringify(this.state.prodCheck),
+    );
+    if (this.state.prodCheck) {
+      var port = '8050';
+    } else {
+      port = '8051';
+    }
     var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (mask.test(this.state.email.toLowerCase()) === true) {
       var testBody = JSON.stringify({
@@ -348,7 +382,9 @@ export default class SignInScreen extends React.Component {
       });
       (async () => {
         const rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/TestLogin',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/TestLogin',
           {
             method: 'POST',
             headers: {
@@ -382,7 +418,9 @@ export default class SignInScreen extends React.Component {
       });
       (async () => {
         const rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/TestLogin',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/TestLogin',
           {
             method: 'POST',
             headers: {

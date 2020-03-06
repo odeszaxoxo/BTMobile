@@ -247,7 +247,7 @@ export class AgendaItem extends React.PureComponent {
                       fontWeight: 'bold',
                       color: '#FF9800',
                     }}>
-                    Труппы:
+                    Коллективы:
                   </Text>
                   <Text
                     style={{

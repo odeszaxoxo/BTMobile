@@ -61,16 +61,38 @@ export default class SettingsScreen extends React.Component {
   UNSAFE_componentWillMount() {
     this.getUserPrefs();
   }
+  x;
+
+  componentDidMount = async () => {
+    this.props.navigation.addListener('didFocus', async () => {
+      try {
+        const small = JSON.parse(await AsyncStorage.getItem('smallCheck'));
+        this.setState({smallCheck: small});
+        const big = JSON.parse(await AsyncStorage.getItem('bigCheck'));
+        this.setState({bigCheck: big});
+        const smallTime = await AsyncStorage.getItem('smallTime');
+        this.setState({selectedShort: smallTime});
+        const bigTime = await AsyncStorage.getItem('bigTime');
+        this.setState({selectedLong: bigTime});
+        const prodCheck = JSON.parse(await AsyncStorage.getItem('development'));
+        this.setState({prodCheck: prodCheck});
+        return [small, big, smallTime, bigTime, prodCheck];
+      } catch (error) {
+        console.log(error.message);
+      }
+    });
+  };
 
   onSmallValueChange = async value => {
+    console.log(value, this.state.smallTime);
     this.setState({
-      smallTime: value,
+      selectedShort: value,
     });
   };
 
   onBigValueChange = async value => {
     this.setState({
-      bigTime: value,
+      selectedLong: value,
     });
   };
 
@@ -232,6 +254,11 @@ export default class SettingsScreen extends React.Component {
   };
 
   fetchData = async testBody => {
+    if (this.state.prodCheck) {
+      var port = '8050';
+    } else {
+      port = '8051';
+    }
     if (realm.objects('EventItem') !== null) {
       realm.write(() => {
         let allEvents = realm.objects('EventItem');
@@ -242,7 +269,9 @@ export default class SettingsScreen extends React.Component {
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponseScenes = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -308,7 +337,9 @@ export default class SettingsScreen extends React.Component {
         this.state.usertoken !== null
       ) {
         let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetScenes',
+          'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -326,7 +357,9 @@ export default class SettingsScreen extends React.Component {
         }
         for (var l = 0; l < scenesArr.length; l++) {
           let urlTest =
-            'https://calendar.bolshoi.ru:8050/WCF/BTService.svc/GetEventsByPeriod/' +
+            'https://calendar.bolshoi.ru:' +
+            port +
+            '/WCF/BTService.svc/GetEventsByPeriod/' +
             scenesArr[l] +
             '/' +
             moment(this.state.startDate).format('YYYY-MM-DDTHH:mm:ss') +
@@ -434,9 +467,9 @@ export default class SettingsScreen extends React.Component {
   saveSettings = async () => {
     this.setState({showSecondModal: true});
     await AsyncStorage.removeItem('smallTime');
-    await AsyncStorage.setItem('smallTime', this.state.smallTime);
+    await AsyncStorage.setItem('smallTime', this.state.selectedShort);
     await AsyncStorage.removeItem('bigTime');
-    await AsyncStorage.setItem('bigTime', this.state.bigTime);
+    await AsyncStorage.setItem('bigTime', this.state.selectedLong);
     await AsyncStorage.removeItem('smallCheck');
     await AsyncStorage.setItem(
       'smallCheck',
