@@ -7,7 +7,6 @@ import {AsyncStorage} from 'react-native';
 import SignInScreen from './src/scenes/AuthFlow/SignIn/SignInScreen';
 import AuthLoadingScreen from './src/scenes/AuthFlow/AuthLoadingScreen/AuthLoadingScreen';
 import Scenes from './src/scenes/ScenesList/ScenesList';
-import AgendaScreen from './src/scenes/Agenda/AgendaScreen';
 import AgendaList from './src/scenes/Agenda/AgendaList';
 import Settings from './src/scenes/Settings/Settings';
 import jsonData from './src/data/data1.json';

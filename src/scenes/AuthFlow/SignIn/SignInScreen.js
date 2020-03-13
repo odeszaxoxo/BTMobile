@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
   Switch,
+  Alert,
 } from 'react-native';
 import {Button, Input, Icon, Text, Overlay} from 'react-native-elements';
 import login from '../../../images/login.jpg.png';
@@ -191,7 +192,10 @@ export default class SignInScreen extends React.Component {
             },
             body: testBody,
           },
-        );
+        ).catch(function(error) {
+          console.log(error);
+          return null;
+        });
         const content = await rawResponseScenes.json();
         for (var k = 1; k <= content.GetScenesResult.length; k++) {
           testArr.push(k);
@@ -259,15 +263,12 @@ export default class SignInScreen extends React.Component {
             },
             body: testBody,
           },
-        );
+        ).catch(function(e) {
+          console.log(e);
+          return null;
+        });
         const contentScenes = await rawResponse.json();
         var id = 0;
-        // if (realm.objects('EventItem') !== null) {
-        //   realm.write(() => {
-        //     let allEvents = realm.objects('EventItem');
-        //     realm.delete(allEvents);
-        //   });
-        // }
         var scenesArr = [];
         for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
@@ -289,6 +290,9 @@ export default class SignInScreen extends React.Component {
               'Content-Type': 'application/json',
             },
             body: testBody,
+          }).catch(function(e) {
+            console.log(e);
+            return null;
           });
           const content1 = await rawResponse1.json();
           for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
@@ -373,6 +377,7 @@ export default class SignInScreen extends React.Component {
     } else {
       port = '8051';
     }
+    console.log(_.isEmpty(realm.objects('EventItem')), 'asdasd');
     var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (mask.test(this.state.email.toLowerCase()) === true) {
       var testBody = JSON.stringify({
@@ -393,21 +398,27 @@ export default class SignInScreen extends React.Component {
             },
             body: testBody,
           },
-        );
-        const content2 = await rawResponse.json();
-        if (content2.TestLoginResult) {
-          await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
-          await AsyncStorage.setItem('user', this.state.email);
-          await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
-          await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
-          await AsyncStorage.setItem('bigTime', 'key0');
-          await AsyncStorage.setItem('smallTime', 'key0');
-          if (_.isEmpty(realm.objects('EventItem'))) {
-            await this.navigate(testBody);
+        ).catch(function(e) {
+          console.log(e);
+          Alert.alert('Ошибка', 'Сервер недоступен');
+          return null;
+        });
+        if (rawResponse !== null) {
+          const content2 = await rawResponse.json();
+          if (content2.TestLoginResult) {
+            await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
+            await AsyncStorage.setItem('user', this.state.email);
+            await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
+            await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
+            await AsyncStorage.setItem('bigTime', 'key0');
+            await AsyncStorage.setItem('smallTime', 'key0');
+            if (_.isEmpty(realm.objects('EventItem'))) {
+              await this.navigate(testBody);
+            }
+            this.props.navigation.navigate('App');
+          } else {
+            this.setState({correct: 'flex'});
           }
-          this.props.navigation.navigate('App');
-        } else {
-          this.setState({correct: 'flex'});
         }
       })();
     } else {
@@ -429,21 +440,27 @@ export default class SignInScreen extends React.Component {
             },
             body: testBody,
           },
-        );
-        const content2 = await rawResponse.json();
-        if (content2.TestLoginResult) {
-          await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
-          await AsyncStorage.setItem('user', this.state.email);
-          await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
-          await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
-          await AsyncStorage.setItem('bigTime', 'key0');
-          await AsyncStorage.setItem('smallTime', 'key0');
-          if (_.isEmpty(realm.objects('EventItem'))) {
-            await this.navigate(testBody);
+        ).catch(function(e) {
+          console.log(e);
+          Alert.alert('Ошибка', 'Сервер недоступен');
+          return null;
+        });
+        if (rawResponse !== null) {
+          const content2 = await rawResponse.json();
+          if (content2.TestLoginResult) {
+            await AsyncStorage.setItem('userToken', JSON.stringify(testBody));
+            await AsyncStorage.setItem('user', this.state.email);
+            await AsyncStorage.setItem('bigCheck', JSON.stringify(true));
+            await AsyncStorage.setItem('smallCheck', JSON.stringify(true));
+            await AsyncStorage.setItem('bigTime', 'key0');
+            await AsyncStorage.setItem('smallTime', 'key0');
+            if (_.isEmpty(realm.objects('EventItem'))) {
+              await this.navigate(testBody);
+            }
+            this.props.navigation.navigate('App');
+          } else {
+            this.setState({correct: 'flex'});
           }
-          this.props.navigation.navigate('App');
-        } else {
-          this.setState({correct: 'flex'});
         }
       })();
     }

@@ -18,6 +18,8 @@ import DatePicker from 'react-native-datepicker';
 const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
 const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
 
+var _ = require('lodash');
+
 export default class SettingsScreen extends React.Component {
   constructor(props) {
     super(props);
@@ -231,6 +233,18 @@ export default class SettingsScreen extends React.Component {
 
   _logout = async () => {
     const {navigation} = this.props;
+    if (realm.objects('EventItem') !== null) {
+      realm.write(() => {
+        let allEvents = realm.objects('EventItem');
+        realm.delete(allEvents);
+      });
+    }
+    if (realm.objects('Scene') !== null) {
+      realm.write(() => {
+        let allScenes = realm.objects('Scene');
+        realm.delete(allScenes);
+      });
+    }
     navigation.navigate('SignIn');
     await AsyncStorage.removeItem('userToken');
     await AsyncStorage.removeItem('user');
@@ -280,7 +294,10 @@ export default class SettingsScreen extends React.Component {
             },
             body: testBody,
           },
-        );
+        ).catch(function(e) {
+          console.log(e);
+          return null;
+        });
         const content = await rawResponseScenes.json();
         for (var k = 1; k <= content.GetScenesResult.length; k++) {
           testArr.push(k);
@@ -348,7 +365,10 @@ export default class SettingsScreen extends React.Component {
             },
             body: testBody,
           },
-        );
+        ).catch(function(e) {
+          console.log(e);
+          return null;
+        });
         const contentScenes = await rawResponse.json();
         var id = 0;
         var scenesArr = [];
@@ -372,6 +392,9 @@ export default class SettingsScreen extends React.Component {
               'Content-Type': 'application/json',
             },
             body: testBody,
+          }).catch(function(e) {
+            console.log(e);
+            return null;
           });
           const content1 = await rawResponse1.json();
           for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {

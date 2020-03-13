@@ -234,6 +234,9 @@ export default class Store extends React.Component {
             'Content-Type': 'application/json',
           },
           body: testBody,
+        }).catch(function(e) {
+          console.log(e);
+          return null;
         });
         const content1 = await rawResponse1.json();
         if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
@@ -374,6 +377,9 @@ export default class Store extends React.Component {
         'Content-Type': 'application/json',
       },
       body: testBody,
+    }).catch(function(e) {
+      console.log(e);
+      return null;
     });
     const content1 = await rawResponse1.json();
     if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
