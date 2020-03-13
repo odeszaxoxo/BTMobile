@@ -141,14 +141,16 @@ class ScenesList extends Component {
               }}
             />
           </View>
-          <SelectMultiple
-            items={this.state.scenes}
-            selectedItems={this.state.selectedScenes}
-            onSelectionsChange={this.onSelectionsChange}
-            style={{zIndex: 0, height: '90%'}}
-            rowStyle={{height: 45}}
-            renderLabel={this.renderLabel}
-          />
+          <View style={{marginBottom: 10}}>
+            <SelectMultiple
+              items={this.state.scenes}
+              selectedItems={this.state.selectedScenes}
+              onSelectionsChange={this.onSelectionsChange}
+              style={{zIndex: 0, height: '84%'}}
+              rowStyle={{height: 45}}
+              renderLabel={this.renderLabel}
+            />
+          </View>
         </View>
         <Button
           onPress={this.goToAgenda}
@@ -156,7 +158,7 @@ class ScenesList extends Component {
           disabled={isEmpty(this.state.selectedScenes) ? true : false}
           buttonStyle={{
             position: 'absolute',
-            bottom: 20,
+            bottom: 25,
             right: 20,
             width: 150,
             height: 50,
