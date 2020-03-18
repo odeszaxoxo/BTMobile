@@ -181,9 +181,9 @@ export default class Store extends React.Component {
   getModifiedEvents = async () => {
     var testBody = this.state.usertoken;
     if (this.state.prodCheck) {
-      var port = 'https://calendartest.bolshoi.ru:8050';
+      var port = 'https://calendar.bolshoi.ru:8050';
     } else {
-      port = 'https://calendar.bolshoi.ru:8051';
+      port = 'https://calendartest.bolshoi.ru:8050';
     }
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('ModifiedRefresh'),
@@ -338,9 +338,9 @@ export default class Store extends React.Component {
   getDeletedEvents = async () => {
     var testBody = this.state.usertoken;
     if (this.state.prodCheck) {
-      var port = 'https://calendartest.bolshoi.ru:8050';
+      var port = 'https://calendar.bolshoi.ru:8050';
     } else {
-      port = 'https://calendar.bolshoi.ru:8051';
+      port = 'https://calendartest.bolshoi.ru:8050';
     }
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('ModifiedRefresh'),

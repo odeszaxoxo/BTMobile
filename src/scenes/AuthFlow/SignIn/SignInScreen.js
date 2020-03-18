@@ -174,9 +174,9 @@ export default class SignInScreen extends React.Component {
   fetchData = async testBody => {
     var testArr = [];
     if (this.state.prodCheck) {
-      var port = 'https://calendartest.bolshoi.ru:8050';
+      var port = 'https://calendar.bolshoi.ru:8050';
     } else {
-      port = 'https://calendar.bolshoi.ru:8051';
+      port = 'https://calendartest.bolshoi.ru:8050';
     }
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
@@ -365,10 +365,11 @@ export default class SignInScreen extends React.Component {
       JSON.stringify(this.state.prodCheck),
     );
     if (this.state.prodCheck) {
-      var port = 'https://calendartest.bolshoi.ru:8050';
+      var port = 'https://calendar.bolshoi.ru:8050';
     } else {
-      port = 'https://calendar.bolshoi.ru:8051';
+      port = 'https://calendartest.bolshoi.ru:8050';
     }
+    console.log(port, this.state.username, this.state.password);
     console.log(_.isEmpty(realm.objects('EventItem')), 'asdasd');
     var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (mask.test(this.state.email.toLowerCase()) === true) {

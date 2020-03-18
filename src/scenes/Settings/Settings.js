@@ -269,9 +269,9 @@ export default class SettingsScreen extends React.Component {
 
   fetchData = async testBody => {
     if (this.state.prodCheck) {
-      var port = 'https://calendartest.bolshoi.ru:8050';
+      var port = 'https://calendar.bolshoi.ru:8050';
     } else {
-      port = 'https://calendar.bolshoi.ru:8051';
+      port = 'https://calendartest.bolshoi.ru:8050';
     }
     if (realm.objects('EventItem') !== null) {
       realm.write(() => {
