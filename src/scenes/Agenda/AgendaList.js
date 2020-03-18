@@ -61,7 +61,7 @@ export default class Store extends React.Component {
     return {
       title: 'События',
       headerTitleStyle: {
-        marginLeft: '20%',
+        marginLeft: '15%',
       },
       headerRight: () => (
         <View style={{flexDirection: 'row'}}>
