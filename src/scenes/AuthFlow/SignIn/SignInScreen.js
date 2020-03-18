@@ -174,16 +174,14 @@ export default class SignInScreen extends React.Component {
   fetchData = async testBody => {
     var testArr = [];
     if (this.state.prodCheck) {
-      var port = '8050';
+      var port = 'https://calendartest.bolshoi.ru:8050';
     } else {
-      port = '8051';
+      port = 'https://calendar.bolshoi.ru:8051';
     }
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponseScenes = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/GetScenes',
+          port + '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -251,19 +249,14 @@ export default class SignInScreen extends React.Component {
         //realm.objects('EventItem') === null &&
         this.state.usertoken !== null
       ) {
-        let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/GetScenes',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
+        let rawResponse = await fetch(port + '/WCF/BTService.svc/GetScenes', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
-        ).catch(function(e) {
+          body: testBody,
+        }).catch(function(e) {
           console.log(e);
           return null;
         });
@@ -275,7 +268,6 @@ export default class SignInScreen extends React.Component {
         }
         for (var l = 0; l < scenesArr.length; l++) {
           let urlTest =
-            'https://calendar.bolshoi.ru:' +
             port +
             '/WCF/BTService.svc/GetEventsByPeriod/' +
             scenesArr[l] +
@@ -373,9 +365,9 @@ export default class SignInScreen extends React.Component {
       JSON.stringify(this.state.prodCheck),
     );
     if (this.state.prodCheck) {
-      var port = '8050';
+      var port = 'https://calendartest.bolshoi.ru:8050';
     } else {
-      port = '8051';
+      port = 'https://calendar.bolshoi.ru:8051';
     }
     console.log(_.isEmpty(realm.objects('EventItem')), 'asdasd');
     var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -386,19 +378,14 @@ export default class SignInScreen extends React.Component {
         isLogin: '0',
       });
       (async () => {
-        const rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/TestLogin',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
+        const rawResponse = await fetch(port + '/WCF/BTService.svc/TestLogin', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
-        ).catch(function(e) {
+          body: testBody,
+        }).catch(function(e) {
           console.log(e);
           Alert.alert('Ошибка', 'Сервер недоступен');
           return null;
@@ -428,19 +415,14 @@ export default class SignInScreen extends React.Component {
         isLogin: '1',
       });
       (async () => {
-        const rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/TestLogin',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
+        const rawResponse = await fetch(port + '/WCF/BTService.svc/TestLogin', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
-        ).catch(function(e) {
+          body: testBody,
+        }).catch(function(e) {
           console.log(e);
           Alert.alert('Ошибка', 'Сервер недоступен');
           return null;

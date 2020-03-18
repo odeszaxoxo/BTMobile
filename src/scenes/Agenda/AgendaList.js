@@ -181,9 +181,9 @@ export default class Store extends React.Component {
   getModifiedEvents = async () => {
     var testBody = this.state.usertoken;
     if (this.state.prodCheck) {
-      var port = '8050';
+      var port = 'https://calendartest.bolshoi.ru:8050';
     } else {
-      port = '8051';
+      port = 'https://calendar.bolshoi.ru:8051';
     }
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('ModifiedRefresh'),
@@ -203,26 +203,20 @@ export default class Store extends React.Component {
     var newMomentTime = moment(refreshDate);
     NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
-        let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/GetScenes',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
+        let rawResponse = await fetch(port + '/WCF/BTService.svc/GetScenes', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
-        );
+          body: testBody,
+        });
         const contentScenes = await rawResponse.json();
         var scenesArr = [];
         for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
         }
         let urlTest =
-          'https://calendar.bolshoi.ru:' +
           port +
           '/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
           moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
@@ -344,9 +338,9 @@ export default class Store extends React.Component {
   getDeletedEvents = async () => {
     var testBody = this.state.usertoken;
     if (this.state.prodCheck) {
-      var port = '8050';
+      var port = 'https://calendartest.bolshoi.ru:8050';
     } else {
-      port = '8051';
+      port = 'https://calendar.bolshoi.ru:8051';
     }
     const refreshDateStorage = JSON.parse(
       await AsyncStorage.getItem('ModifiedRefresh'),
@@ -365,7 +359,6 @@ export default class Store extends React.Component {
     var refreshDate = new Date();
     var newMomentTime = moment(refreshDate);
     let urlTest =
-      'https://calendar.bolshoi.ru:' +
       port +
       '/WCF/BTService.svc/GetDeletedEventsByPeriod/' +
       moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +

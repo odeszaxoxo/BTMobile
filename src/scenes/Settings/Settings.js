@@ -269,9 +269,9 @@ export default class SettingsScreen extends React.Component {
 
   fetchData = async testBody => {
     if (this.state.prodCheck) {
-      var port = '8050';
+      var port = 'https://calendartest.bolshoi.ru:8050';
     } else {
-      port = '8051';
+      port = 'https://calendar.bolshoi.ru:8051';
     }
     if (realm.objects('EventItem') !== null) {
       realm.write(() => {
@@ -283,9 +283,7 @@ export default class SettingsScreen extends React.Component {
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponseScenes = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/GetScenes',
+          port + '/WCF/BTService.svc/GetScenes',
           {
             method: 'POST',
             headers: {
@@ -353,19 +351,14 @@ export default class SettingsScreen extends React.Component {
         //realm.objects('EventItem') === null &&
         this.state.usertoken !== null
       ) {
-        let rawResponse = await fetch(
-          'https://calendar.bolshoi.ru:' +
-            port +
-            '/WCF/BTService.svc/GetScenes',
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: testBody,
+        let rawResponse = await fetch(port + '/WCF/BTService.svc/GetScenes', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
-        ).catch(function(e) {
+          body: testBody,
+        }).catch(function(e) {
           console.log(e);
           return null;
         });
@@ -377,7 +370,6 @@ export default class SettingsScreen extends React.Component {
         }
         for (var l = 0; l < scenesArr.length; l++) {
           let urlTest =
-            'https://calendar.bolshoi.ru:' +
             port +
             '/WCF/BTService.svc/GetEventsByPeriod/' +
             scenesArr[l] +
