@@ -9,6 +9,7 @@ import {
   Text,
   ActivityIndicator,
   Icon,
+  Platform,
 } from 'react-native';
 import {Button, Overlay} from 'react-native-elements';
 import NotificationService from '../../services/NotificationService';
@@ -165,7 +166,7 @@ export default class Store extends React.Component {
   };
 
   showPicker = () => {
-    this.setState({showPicker: true});
+    this.setState({showPicker: !this.state.showPicker});
   };
 
   refreshDataFromApi = async () => {
@@ -609,18 +610,31 @@ export default class Store extends React.Component {
 
   closePicker = async (date, event) => {
     let savedDate = await AsyncStorage.getItem('PickerDate');
-    let dateFormatted = new Date(date.nativeEvent.timestamp);
+    if (Platform.OS === 'ios') {
+      var dateFormatted = new Date(event);
+    } else {
+      dateFormatted = new Date(date.nativeEvent.timestamp);
+    }
     let testDate = dateFormatted;
     if (event !== undefined) {
       testDate = dateFormatted;
-      this.setState({showPicker: false, pickerDate: dateFormatted});
+      this.setState({
+        showPicker: false,
+        pickerDate: dateFormatted,
+      });
     } else if (savedDate !== null && savedDate !== undefined) {
       let formatter = savedDate.substring(0, savedDate.length - 6);
       testDate = new Date(formatter.substring(1) + 'Z');
-      this.setState({showPicker: false, pickerDate: testDate});
+      this.setState({
+        showPicker: false,
+        pickerDate: testDate,
+      });
     } else {
       testDate = null;
-      this.setState({showPicker: false, pickerDate: new Date()});
+      this.setState({
+        showPicker: false,
+        pickerDate: new Date(),
+      });
     }
     await AsyncStorage.removeItem('PickerDate');
     await AsyncStorage.setItem(
@@ -680,9 +694,7 @@ export default class Store extends React.Component {
             mode="date"
             is24Hour={true}
             display="default"
-            onChange={(date, event) => {
-              this.closePicker(date, event);
-            }}
+            onChange={this.closePicker}
           />
         )}
         <FlatList
