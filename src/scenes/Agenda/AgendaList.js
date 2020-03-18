@@ -605,35 +605,63 @@ export default class Store extends React.Component {
     let savedDate = await AsyncStorage.getItem('PickerDate');
     if (Platform.OS === 'ios') {
       var dateFormatted = new Date(event);
+      let testDate = dateFormatted;
+      if (event !== undefined) {
+        testDate = dateFormatted;
+        this.setState({
+          pickerDate: dateFormatted,
+        });
+      } else if (savedDate !== null && savedDate !== undefined) {
+        let formatter = savedDate.substring(0, savedDate.length - 6);
+        testDate = new Date(formatter.substring(1) + 'Z');
+        this.setState({
+          pickerDate: testDate,
+        });
+      } else {
+        testDate = null;
+        this.setState({
+          pickerDate: new Date(),
+        });
+      }
+      await AsyncStorage.removeItem('PickerDate');
+      await AsyncStorage.setItem(
+        'PickerDate',
+        testDate !== null ? JSON.stringify(testDate) : testDate,
+      );
     } else {
       dateFormatted = new Date(date.nativeEvent.timestamp);
+      let testDate = dateFormatted;
+      if (event !== undefined) {
+        testDate = dateFormatted;
+        this.setState({
+          showPicker: false,
+          pickerDate: dateFormatted,
+        });
+      } else if (savedDate !== null && savedDate !== undefined) {
+        let formatter = savedDate.substring(0, savedDate.length - 6);
+        testDate = new Date(formatter.substring(1) + 'Z');
+        this.setState({
+          showPicker: false,
+          pickerDate: testDate,
+        });
+      } else {
+        testDate = null;
+        this.setState({
+          showPicker: false,
+          pickerDate: new Date(),
+        });
+      }
+      await AsyncStorage.removeItem('PickerDate');
+      await AsyncStorage.setItem(
+        'PickerDate',
+        testDate !== null ? JSON.stringify(testDate) : testDate,
+      );
+      await this.formatData();
     }
-    let testDate = dateFormatted;
-    if (event !== undefined) {
-      testDate = dateFormatted;
-      this.setState({
-        showPicker: false,
-        pickerDate: dateFormatted,
-      });
-    } else if (savedDate !== null && savedDate !== undefined) {
-      let formatter = savedDate.substring(0, savedDate.length - 6);
-      testDate = new Date(formatter.substring(1) + 'Z');
-      this.setState({
-        showPicker: false,
-        pickerDate: testDate,
-      });
-    } else {
-      testDate = null;
-      this.setState({
-        showPicker: false,
-        pickerDate: new Date(),
-      });
-    }
-    await AsyncStorage.removeItem('PickerDate');
-    await AsyncStorage.setItem(
-      'PickerDate',
-      testDate !== null ? JSON.stringify(testDate) : testDate,
-    );
+  };
+
+  closePickerIOS = async () => {
+    this.setState({showPicker: false});
     await this.formatData();
   };
 
@@ -678,17 +706,36 @@ export default class Store extends React.Component {
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
         {this.state.showPicker && (
-          <DateTimePicker
-            value={
-              this.state.pickerDate
-                ? new Date(this.state.pickerDate)
-                : new Date()
-            }
-            mode="date"
-            is24Hour={true}
-            display="default"
-            onChange={this.closePicker}
-          />
+          <View
+            style={{
+              marginTop: -40,
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}>
+            <DateTimePicker
+              value={
+                this.state.pickerDate
+                  ? new Date(this.state.pickerDate)
+                  : new Date()
+              }
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={(date, event) => this.closePicker(date, event)}
+            />
+            {Platform.OS === 'ios' && (
+              <Button
+                style={{
+                  marginTop: -20,
+                  height: 40,
+                  width: '100%',
+                  marginBottom: 20,
+                }}
+                title="Выбрать"
+                onPress={this.closePickerIOS}
+              />
+            )}
+          </View>
         )}
         <FlatList
           data={this.state.items}
