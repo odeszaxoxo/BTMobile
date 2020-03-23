@@ -276,7 +276,16 @@ export default class SettingsScreen extends React.Component {
     if (realm.objects('EventItem') !== null) {
       realm.write(() => {
         let allEvents = realm.objects('EventItem');
-        realm.delete(allEvents);
+        let deletedEvents = [];
+        for (let i = 0; i < allEvents.length; i++) {
+          if (
+            allEvents[i].date <= this.state.endDate &&
+            allEvents[i].date >= this.state.startDate
+          ) {
+            deletedEvents.push(allEvents[i]);
+          }
+        }
+        realm.delete(deletedEvents);
       });
     }
     var testArr = [];

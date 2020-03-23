@@ -164,7 +164,7 @@ export default class SignInScreen extends React.Component {
     var newDate = new Date();
     newDate.setMonth(newDate.getMonth() + 1);
     var lastDate = new Date();
-    lastDate.setMonth(lastDate.getMonth() - 1);
+    lastDate.setDate(lastDate.getDate() - 7);
     var newMomentTime = moment(newDate);
     var lastMomentTime = moment(lastDate);
     // eslint-disable-next-line react/no-did-mount-set-state
