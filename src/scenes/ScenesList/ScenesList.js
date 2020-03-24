@@ -73,6 +73,41 @@ class ScenesList extends Component {
     this.setState({selectedScenes: null});
   };
 
+  shadeColor = (color, percent) => {
+    var R = parseInt(color.substring(1, 3), 16);
+    var G = parseInt(color.substring(3, 5), 16);
+    var B = parseInt(color.substring(5, 7), 16);
+
+    R = parseInt((R * (100 + percent)) / 100);
+    G = parseInt((G * (100 + percent)) / 100);
+    B = parseInt((B * (100 + percent)) / 100);
+
+    if (R === 0) {
+      R = 32;
+    }
+
+    if (G === 0) {
+      G = 32;
+    }
+
+    if (B === 0) {
+      B = 32;
+    }
+
+    R = R < 255 ? R : 255;
+    G = G < 255 ? G : 255;
+    B = B < 255 ? B : 255;
+
+    var RR =
+      R.toString(16).length === 1 ? '0' + R.toString(16) : R.toString(16);
+    var GG =
+      G.toString(16).length === 1 ? '0' + G.toString(16) : G.toString(16);
+    var BB =
+      B.toString(16).length === 1 ? '0' + B.toString(16) : B.toString(16);
+
+    return '#' + RR + GG + BB;
+  };
+
   goToAgenda = async () => {
     await AsyncStorage.removeItem('Selected');
     const {navigation} = this.props;
@@ -99,7 +134,13 @@ class ScenesList extends Component {
             width: '95%',
             alignItems: 'center',
           }}>
-          <View style={{height: 45, width: 10, backgroundColor: col.color}} />
+          <View
+            style={{
+              height: 45,
+              width: 10,
+              backgroundColor: this.shadeColor(col.color, -15),
+            }}
+          />
           <Text style={{marginLeft: 10}}>{label}</Text>
         </View>
       </View>
