@@ -18,8 +18,8 @@ import realm from '../../services/realm';
 import {AgendaItem} from './AgendaItem';
 import moment from 'moment';
 import NetInfo from '@react-native-community/netinfo';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import AwesomeIcon from 'react-native-vector-icons/FontAwesome5';
+import CalendarPicker from 'react-native-calendar-picker';
 
 var _ = require('lodash');
 
@@ -671,6 +671,16 @@ export default class Store extends React.Component {
     }
   };
 
+  onDateChange = async date => {
+    this.setState({
+      pickerDate: date,
+      showPicker: false,
+    });
+    await AsyncStorage.removeItem('PickerDate');
+    await AsyncStorage.setItem('PickerDate', JSON.stringify(date));
+    await this.formatData();
+  };
+
   closePickerIOS = async () => {
     this.setState({showPicker: false});
     await this.formatData();
@@ -685,6 +695,7 @@ export default class Store extends React.Component {
           height: '100%',
           zIndex: 0,
           marginTop: 20,
+          position: 'relative',
         }}>
         <Overlay
           isVisible={this.state.showModal}
@@ -717,35 +728,29 @@ export default class Store extends React.Component {
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
         {this.state.showPicker && (
-          <View
-            style={{
-              marginTop: -40,
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}>
-            <DateTimePicker
-              value={
-                this.state.pickerDate
-                  ? new Date(this.state.pickerDate)
-                  : new Date()
-              }
-              mode="date"
-              is24Hour={true}
-              display="default"
-              onChange={(date, event) => this.closePicker(date, event)}
+          <View style={{width: '100%', marginBottom: 30, marginTop: -20}}>
+            <CalendarPicker
+              startFromMonday={true}
+              todayBackgroundColor="#f2e6ff"
+              selectedDayColor="#1976D2"
+              selectedDayTextColor="#FFFFFF"
+              onDateChange={this.onDateChange}
+              weekdays={['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']}
+              months={[
+                'Январь',
+                'Ферваль',
+                'Март',
+                'Апрель',
+                'Май',
+                'Июнь',
+                'Июль',
+                'Август',
+                'Сентябрь',
+                'Октябрь',
+                'Ноябрь',
+                'Декабрь',
+              ]}
             />
-            {Platform.OS === 'ios' && (
-              <Button
-                style={{
-                  marginTop: -20,
-                  height: 40,
-                  width: '100%',
-                  marginBottom: 20,
-                }}
-                title="Выбрать"
-                onPress={this.closePickerIOS}
-              />
-            )}
           </View>
         )}
         <FlatList

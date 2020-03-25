@@ -1,17 +1,16 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {StyleSheet, View, Text, AsyncStorage} from 'react-native';
+import {StyleSheet, View, AsyncStorage} from 'react-native';
 import {Button} from 'react-native-elements';
 import moment from 'moment';
-
-import DatePicker from 'react-native-datepicker';
+import CalendarPicker from 'react-native-calendar-picker';
 
 export default class DatePickers extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      startDate: new Date(),
-      endDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      selectedStartDate: new Date(),
+      selectedEndDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
     };
   }
   static navigationOptions = {
@@ -23,10 +22,23 @@ export default class DatePickers extends React.Component {
       var startDate = await AsyncStorage.getItem('SelectedStartDate');
       var endDate = await AsyncStorage.getItem('SelectedEndDate');
       if (startDate !== null && endDate !== null) {
-        this.setState({startDate: startDate, endDate: endDate});
+        this.setState({selectedStartDate: startDate, selectedEndDate: endDate});
       }
     });
   }
+
+  onDateChange = (date, type) => {
+    if (type === 'END_DATE') {
+      this.setState({
+        selectedEndDate: date,
+      });
+    } else {
+      this.setState({
+        selectedStartDate: date,
+        selectedEndDate: null,
+      });
+    }
+  };
 
   goToAgenda = async () => {
     await AsyncStorage.removeItem('SelectedStartDate');
@@ -35,11 +47,11 @@ export default class DatePickers extends React.Component {
     const {navigation} = this.props;
     await AsyncStorage.setItem(
       'SelectedStartDate',
-      moment(this.state.startDate).format('YYYY-MM-DDT00:00:00'),
+      moment(this.state.selectedStartDate).format('YYYY-MM-DDT00:00:00'),
     );
     await AsyncStorage.setItem(
       'SelectedEndDate',
-      moment(this.state.endDate).format('YYYY-MM-DDT00:00:00'),
+      moment(this.state.selectedEndDate).format('YYYY-MM-DDT00:00:00'),
     );
     navigation.navigate('Agenda');
   };
@@ -52,73 +64,36 @@ export default class DatePickers extends React.Component {
           justifyContent: 'flex-start',
           height: '100%',
           zIndex: 0,
-          marginTop: 20,
         }}>
-        <View>
-          <Text style={{marginBottom: 10, marginLeft: 5, fontSize: 18}}>
-            Показывать события с :
-          </Text>
-          <DatePicker
-            style={{width: '95%', marginTop: 10, marginBottom: 10}}
-            date={this.state.startDate}
-            mode="date"
-            placeholder="select date"
-            format="YYYY-MM-DD"
-            confirmBtnText="Confirm"
-            cancelBtnText="Cancel"
-            customStyles={{
-              dateIcon: {
-                position: 'absolute',
-                left: 0,
-                top: 4,
-                marginLeft: 0,
-              },
-              dateInput: {
-                marginLeft: 36,
-              },
-              // ... You can check the source to find the other keys.
-            }}
-            onDateChange={date => {
-              this.setState({startDate: date});
-            }}
-          />
-        </View>
-        <View>
-          <Text style={{marginBottom: 0, marginLeft: 5, fontSize: 18}}>
-            по :
-          </Text>
-          <DatePicker
-            style={{width: '95%', marginTop: 10, marginBottom: 10}}
-            date={this.state.endDate}
-            mode="date"
-            placeholder="select date"
-            format="YYYY-MM-DD"
-            confirmBtnText="Confirm"
-            cancelBtnText="Cancel"
-            customStyles={{
-              dateIcon: {
-                position: 'absolute',
-                left: 0,
-                top: 4,
-                marginLeft: 0,
-              },
-              dateInput: {
-                marginLeft: 36,
-              },
-              // ... You can check the source to find the other keys.
-            }}
-            onDateChange={date => {
-              this.setState({endDate: date});
-            }}
-          />
-        </View>
+        <CalendarPicker
+          startFromMonday={true}
+          allowRangeSelection={true}
+          todayBackgroundColor="#f2e6ff"
+          selectedDayColor="#1976D2"
+          selectedDayTextColor="#FFFFFF"
+          onDateChange={this.onDateChange}
+          weekdays={['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']}
+          months={[
+            'Январь',
+            'Ферваль',
+            'Март',
+            'Апрель',
+            'Май',
+            'Июнь',
+            'Июль',
+            'Август',
+            'Сентябрь',
+            'Октябрь',
+            'Ноябрь',
+            'Декабрь',
+          ]}
+        />
         <Button
           onPress={this.goToAgenda}
           title="Выбрать"
           buttonStyle={{
-            position: 'absolute',
-            bottom: -70,
-            right: 20,
+            marginTop: 40,
+            alignSelf: 'center',
             width: 150,
             height: 50,
             zIndex: 1,
