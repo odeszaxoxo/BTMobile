@@ -19,6 +19,8 @@ import {Header} from 'react-navigation-stack';
 
 var _ = require('lodash');
 
+var scenesCounter = 0;
+
 export default class SignInScreen extends React.Component {
   constructor(props) {
     super(props);
@@ -137,7 +139,8 @@ export default class SignInScreen extends React.Component {
             justifyContent: 'space-around',
           }}>
           <Text style={{alignSelf: 'center', fontSize: 16}}>
-            Подождите, идет первоначальная загрузка данных.
+            Подождите, идет первоначальная загрузка данных ({scenesCounter} из{' '}
+            {this.state.scenesCountMax} сцен.)
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
@@ -195,6 +198,7 @@ export default class SignInScreen extends React.Component {
           return null;
         });
         const content = await rawResponseScenes.json();
+        this.setState({scenesCountMax: content.GetScenesResult.length});
         for (var k = 1; k <= content.GetScenesResult.length; k++) {
           testArr.push(k);
         }
@@ -267,6 +271,7 @@ export default class SignInScreen extends React.Component {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
         }
         for (var l = 0; l < scenesArr.length; l++) {
+          scenesCounter = l + 1;
           let urlTest =
             port +
             '/WCF/BTService.svc/GetEventsByPeriod/' +

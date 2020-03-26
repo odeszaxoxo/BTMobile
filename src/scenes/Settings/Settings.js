@@ -13,12 +13,12 @@ import moment from 'moment';
 import {Item, Picker, Icon} from 'native-base';
 import realm from '../../services/realm';
 import NetInfo from '@react-native-community/netinfo';
-import DatePicker from 'react-native-datepicker';
+import CalendarPicker from 'react-native-calendar-picker';
 
 const smallItems = {key0: 5, key1: 10, key2: 15, key3: 30};
 const bigItems = {key0: 1, key1: 2, key2: 3, key3: 5};
 
-var _ = require('lodash');
+var scenesCounter = 0;
 
 export default class SettingsScreen extends React.Component {
   constructor(props) {
@@ -306,6 +306,8 @@ export default class SettingsScreen extends React.Component {
           return null;
         });
         const content = await rawResponseScenes.json();
+        console.log(content.GetScenesResult.length);
+        this.setState({scenesCountMax: content.GetScenesResult.length});
         for (var k = 1; k <= content.GetScenesResult.length; k++) {
           testArr.push(k);
         }
@@ -378,6 +380,7 @@ export default class SettingsScreen extends React.Component {
           scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
         }
         for (var l = 0; l < scenesArr.length; l++) {
+          scenesCounter = l;
           let urlTest =
             port +
             '/WCF/BTService.svc/GetEventsByPeriod/' +
@@ -398,6 +401,7 @@ export default class SettingsScreen extends React.Component {
             return null;
           });
           const content1 = await rawResponse1.json();
+          console.log(content1);
           for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
             if (
               content1.GetEventsByPeriodResult[p].StartDateStr !== undefined &&
@@ -460,6 +464,7 @@ export default class SettingsScreen extends React.Component {
 
   refresh = async testBody => {
     this.setState({showModal: true});
+    console.log(testBody, this.state.startDate, this.state.endDate);
     await this.fetchData(testBody);
     this.setState({showModal: false});
   };
@@ -510,6 +515,19 @@ export default class SettingsScreen extends React.Component {
     this.props.navigation.navigate('Agenda');
   };
 
+  onDateChange = (date, type) => {
+    if (type === 'END_DATE') {
+      this.setState({
+        endDate: date,
+      });
+    } else {
+      this.setState({
+        startDate: date,
+        endDate: null,
+      });
+    }
+  };
+
   render() {
     return (
       <ReactNativeSettingsPage>
@@ -517,14 +535,15 @@ export default class SettingsScreen extends React.Component {
           isVisible={this.state.showModal}
           overlayStyle={{
             width: '80%',
-            height: '10%',
+            height: '15%',
             alignSelf: 'center',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-around',
           }}>
           <Text style={{alignSelf: 'center'}}>
-            Подождите, идет обновление данных.
+            Подождите, идет обновление данных ({scenesCounter} из{' '}
+            {this.state.scenesCountMax} сцен.)
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>
@@ -532,7 +551,7 @@ export default class SettingsScreen extends React.Component {
           isVisible={this.state.showSecondModal}
           overlayStyle={{
             width: '80%',
-            height: '10%',
+            height: '15%',
             alignSelf: 'center',
             display: 'flex',
             flexDirection: 'column',
@@ -752,61 +771,28 @@ export default class SettingsScreen extends React.Component {
               />
             </View>
             <View>
-              <Text style={{marginBottom: 10, marginLeft: 5, fontSize: 14}}>
-                Обновить с :
-              </Text>
-              <DatePicker
-                style={{width: '95%', marginTop: 10, marginBottom: 10}}
-                date={this.state.startDate}
-                mode="date"
-                placeholder="select date"
-                format="YYYY-MM-DD"
-                confirmBtnText="Confirm"
-                cancelBtnText="Cancel"
-                customStyles={{
-                  dateIcon: {
-                    position: 'absolute',
-                    left: 0,
-                    top: 4,
-                    marginLeft: 0,
-                  },
-                  dateInput: {
-                    marginLeft: 36,
-                  },
-                  // ... You can check the source to find the other keys.
-                }}
-                onDateChange={date => {
-                  this.setState({startDate: date});
-                }}
-              />
-            </View>
-            <View>
-              <Text style={{marginBottom: 0, marginLeft: 5, fontSize: 14}}>
-                по :
-              </Text>
-              <DatePicker
-                style={{width: '95%', marginTop: 10, marginBottom: 10}}
-                date={this.state.endDate}
-                mode="date"
-                placeholder="select date"
-                format="YYYY-MM-DD"
-                confirmBtnText="Confirm"
-                cancelBtnText="Cancel"
-                customStyles={{
-                  dateIcon: {
-                    position: 'absolute',
-                    left: 0,
-                    top: 4,
-                    marginLeft: 0,
-                  },
-                  dateInput: {
-                    marginLeft: 36,
-                  },
-                  // ... You can check the source to find the other keys.
-                }}
-                onDateChange={date => {
-                  this.setState({endDate: date});
-                }}
+              <CalendarPicker
+                startFromMonday={true}
+                allowRangeSelection={true}
+                todayBackgroundColor="#f2e6ff"
+                selectedDayColor="#1976D2"
+                selectedDayTextColor="#FFFFFF"
+                onDateChange={this.onDateChange}
+                weekdays={['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']}
+                months={[
+                  'Январь',
+                  'Ферваль',
+                  'Март',
+                  'Апрель',
+                  'Май',
+                  'Июнь',
+                  'Июль',
+                  'Август',
+                  'Сентябрь',
+                  'Октябрь',
+                  'Ноябрь',
+                  'Декабрь',
+                ]}
               />
             </View>
           </View>
