@@ -199,53 +199,63 @@ export default class SignInScreen extends React.Component {
           console.log(error);
           return null;
         });
-        const content = await rawResponseScenes.json();
-        this.setState({scenesCountMax: content.GetScenesResult.length});
-        for (var k = 1; k <= content.GetScenesResult.length; k++) {
-          testArr.push(k);
+        const stat = rawResponseScenes.status;
+        console.log(stat);
+        if (stat === 200) {
+          const content = await rawResponseScenes.json();
+          this.setState({scenesCountMax: content.GetScenesResult.length});
+          for (var k = 1; k <= content.GetScenesResult.length; k++) {
+            testArr.push(k);
+          }
+          realm.write(() => {
+            if (realm.objects('Selected').length < 1) {
+              realm.create(
+                'Selected',
+                {selected: JSON.stringify(testArr), id: 1},
+                'modified',
+              );
+              this.setState({realm});
+            }
+          });
+          realm.write(() => {
+            if (realm.objects('Scene') !== null) {
+              realm.delete(realm.objects('Scene'));
+              for (var l = 1; l <= content.GetScenesResult.length; l++) {
+                realm.create(
+                  'Scene',
+                  {
+                    selected: false,
+                    id: l,
+                    title: content.GetScenesResult[l - 1].Name,
+                    color: content.GetScenesResult[l - 1].Color,
+                    resourceId: content.GetScenesResult[l - 1].ResourceId,
+                  },
+                  'modified',
+                );
+              }
+            } else {
+              for (var l = 1; l <= content.GetScenesResult.length; l++) {
+                realm.create(
+                  'Scene',
+                  {
+                    selected: false,
+                    id: l,
+                    title: content.GetScenesResult[l - 1].Name,
+                    color: content.GetScenesResult[l - 1].Color,
+                    resourceId: content.GetScenesResult[l - 1].ResourceId,
+                  },
+                  'modified',
+                );
+              }
+            }
+          });
+        } else {
+          return Alert.alert(
+            'Ошибка',
+            'Произошла ошибка при подключении к серверу. Код ошибки:' + stat,
+            {cancelable: true},
+          );
         }
-        realm.write(() => {
-          if (realm.objects('Selected').length < 1) {
-            realm.create(
-              'Selected',
-              {selected: JSON.stringify(testArr), id: 1},
-              'modified',
-            );
-            this.setState({realm});
-          }
-        });
-        realm.write(() => {
-          if (realm.objects('Scene') !== null) {
-            realm.delete(realm.objects('Scene'));
-            for (var l = 1; l <= content.GetScenesResult.length; l++) {
-              realm.create(
-                'Scene',
-                {
-                  selected: false,
-                  id: l,
-                  title: content.GetScenesResult[l - 1].Name,
-                  color: content.GetScenesResult[l - 1].Color,
-                  resourceId: content.GetScenesResult[l - 1].ResourceId,
-                },
-                'modified',
-              );
-            }
-          } else {
-            for (var l = 1; l <= content.GetScenesResult.length; l++) {
-              realm.create(
-                'Scene',
-                {
-                  selected: false,
-                  id: l,
-                  title: content.GetScenesResult[l - 1].Name,
-                  color: content.GetScenesResult[l - 1].Color,
-                  resourceId: content.GetScenesResult[l - 1].ResourceId,
-                },
-                'modified',
-              );
-            }
-          }
-        });
         this.setState({realm});
       }
     });
@@ -282,6 +292,7 @@ export default class SignInScreen extends React.Component {
             moment(this.state.endTime).format('YYYY-MM-DDTHH:mm:ss') +
             '/' +
             moment(this.state.startTime).format('YYYY-MM-DDTHH:mm:ss');
+          console.log(urlTest);
           let rawResponse1 = await fetch(urlTest, {
             method: 'POST',
             headers: {
@@ -293,61 +304,72 @@ export default class SignInScreen extends React.Component {
             console.log(e);
             return null;
           });
-          const content1 = await rawResponse1.json();
-          for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
-            if (
-              content1.GetEventsByPeriodResult[p].StartDateStr !== undefined &&
-              content1.GetEventsByPeriodResult[p].Title !== undefined
-            ) {
-              let beginTime = content1.GetEventsByPeriodResult[
-                p
-              ].StartDateStr.substring(11);
-              let endingTime = content1.GetEventsByPeriodResult[
-                p
-              ].EndDateStr.substring(11);
-              let eventTime = beginTime + ' - ' + endingTime;
-              let date = content1.GetEventsByPeriodResult[
-                p
-              ].StartDateStr.substring(0, 10)
-                .split('.')
-                .join('-');
-              let dateFormatted =
-                date.substring(6) +
-                '-' +
-                date.substring(3).substring(0, 2) +
-                '-' +
-                date.substring(0, 2);
-              let alertedPersons =
-                content1.GetEventsByPeriodResult[p].AlertedPersons;
-              let troups = content1.GetEventsByPeriodResult[p].Troups;
-              let outer = content1.GetEventsByPeriodResult[p].OuterPersons;
-              let required =
-                content1.GetEventsByPeriodResult[p].RequiredPersons;
-              var conductor = content1.GetEventsByPeriodResult[p].Conductor;
-              var sceneId = content1.GetEventsByPeriodResult[p].ResourceId;
-              var serverId = content1.GetEventsByPeriodResult[p].Id;
-              realm.write(() => {
-                realm.create(
-                  'EventItem',
-                  {
-                    title: content1.GetEventsByPeriodResult[p].Title,
-                    date: dateFormatted,
-                    scene: l + 1,
-                    time: eventTime,
-                    alerted: alertedPersons,
-                    outer: outer,
-                    troups: troups,
-                    required: required,
-                    conductor: conductor,
-                    id: id++,
-                    sceneId: sceneId,
-                    serverId: serverId,
-                  },
-                  'modified',
-                );
-                this.setState({realm});
-              });
+          const stat = rawResponse1.status;
+          console.log(stat);
+          if (stat === 200) {
+            const content1 = await rawResponse1.json();
+            for (var p = 0; p < content1.GetEventsByPeriodResult.length; p++) {
+              if (
+                content1.GetEventsByPeriodResult[p].StartDateStr !==
+                  undefined &&
+                content1.GetEventsByPeriodResult[p].Title !== undefined
+              ) {
+                let beginTime = content1.GetEventsByPeriodResult[
+                  p
+                ].StartDateStr.substring(11);
+                let endingTime = content1.GetEventsByPeriodResult[
+                  p
+                ].EndDateStr.substring(11);
+                let eventTime = beginTime + ' - ' + endingTime;
+                let date = content1.GetEventsByPeriodResult[
+                  p
+                ].StartDateStr.substring(0, 10)
+                  .split('.')
+                  .join('-');
+                let dateFormatted =
+                  date.substring(6) +
+                  '-' +
+                  date.substring(3).substring(0, 2) +
+                  '-' +
+                  date.substring(0, 2);
+                let alertedPersons =
+                  content1.GetEventsByPeriodResult[p].AlertedPersons;
+                let troups = content1.GetEventsByPeriodResult[p].Troups;
+                let outer = content1.GetEventsByPeriodResult[p].OuterPersons;
+                let required =
+                  content1.GetEventsByPeriodResult[p].RequiredPersons;
+                var conductor = content1.GetEventsByPeriodResult[p].Conductor;
+                var sceneId = content1.GetEventsByPeriodResult[p].ResourceId;
+                var serverId = content1.GetEventsByPeriodResult[p].Id;
+                realm.write(() => {
+                  realm.create(
+                    'EventItem',
+                    {
+                      title: content1.GetEventsByPeriodResult[p].Title,
+                      date: dateFormatted,
+                      scene: l + 1,
+                      time: eventTime,
+                      alerted: alertedPersons,
+                      outer: outer,
+                      troups: troups,
+                      required: required,
+                      conductor: conductor,
+                      id: id++,
+                      sceneId: sceneId,
+                      serverId: serverId,
+                    },
+                    'modified',
+                  );
+                  this.setState({realm});
+                });
+              }
             }
+          } else {
+            return Alert.alert(
+              'Ошибка',
+              'Произошла ошибка при подключении к серверу. Код ошибки:' + stat,
+              {cancelable: true},
+            );
           }
         }
       }

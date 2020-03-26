@@ -144,6 +144,7 @@ export default class Store extends React.Component {
     if (realm.objects('EventItem').length > 0) {
       await this.firstOpenFormatData();
     }
+    this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
     this.props.navigation.addListener('didFocus', async () => {
       this.interval = setInterval(
         () => this.refreshDataFromApi(),
@@ -223,135 +224,156 @@ export default class Store extends React.Component {
           },
           body: testBody,
         });
-        const contentScenes = await rawResponse.json();
-        var scenesArr = [];
-        for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
-          scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
-        }
-        let urlTest =
-          port +
-          '/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
-          moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
-          '/' +
-          moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
-        console.log(urlTest);
-        let rawResponse1 = await fetch(urlTest, {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: testBody,
-        }).catch(function(e) {
-          console.log(e);
-          return null;
-        });
-        const content1 = await rawResponse1.json();
-        if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
-        } else {
-          for (
-            var p = 0;
-            p < content1.GetModifiedEventsByPeriodResult.length;
-            p++
-          ) {
-            let beginTime = content1.GetModifiedEventsByPeriodResult[
-              p
-            ].StartDateStr.substring(11);
-            let endingTime = content1.GetModifiedEventsByPeriodResult[
-              p
-            ].EndDateStr.substring(11);
-            let eventTime = beginTime + ' - ' + endingTime;
-            let date = content1.GetModifiedEventsByPeriodResult[
-              p
-            ].StartDateStr.substring(0, 10)
-              .split('.')
-              .join('-');
-            let dateFormatted =
-              date.substring(6) +
-              '-' +
-              date.substring(3).substring(0, 2) +
-              '-' +
-              date.substring(0, 2);
-            let alertedPersons =
-              content1.GetModifiedEventsByPeriodResult[p].AlertedPersons;
-            let troups = content1.GetModifiedEventsByPeriodResult[p].Troups;
-            let outer =
-              content1.GetModifiedEventsByPeriodResult[p].OuterPersons;
-            let required =
-              content1.GetModifiedEventsByPeriodResult[p].RequiredPersons;
-            let conductor =
-              content1.GetModifiedEventsByPeriodResult[p].Conductor;
-            let sceneId =
-              content1.GetModifiedEventsByPeriodResult[p].ResourceId;
-            let serverId = content1.GetModifiedEventsByPeriodResult[p].Id;
-            let findVar = sceneId.charAt(0).toUpperCase() + sceneId.slice(1);
-            if (
-              realm.objects('Scene').filtered('resourceId = $0', findVar)[0]
-                .id === undefined
-            ) {
-              Alert.alert(
-                'Внимание',
-                'Добавлена новая сцена. Пожалуйста, обновите данные через настройки!',
-                {cancelable: true},
-              );
+        const stat = rawResponse.status;
+        if (stat === 200) {
+          const contentScenes = await rawResponse.json();
+          var scenesArr = [];
+          for (var h = 0; h < contentScenes.GetScenesResult.length; h++) {
+            scenesArr.push(contentScenes.GetScenesResult[h].ResourceId);
+          }
+          let urlTest =
+            port +
+            '/WCF/BTService.svc/GetModifiedEventsByPeriod/' +
+            moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
+            '/' +
+            moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
+          let rawResponse1 = await fetch(urlTest, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: testBody,
+          }).catch(function(e) {
+            console.log(e);
+            return null;
+          });
+          const stat1 = rawResponse1.status;
+          console.log(stat1);
+          if (stat1 === 200) {
+            const content1 = await rawResponse1.json();
+            if (_.isEmpty(content1.GetModifiedEventsByPeriodResult)) {
             } else {
-              var refreshedScene = realm
-                .objects('Scene')
-                .filtered('resourceId = $0', findVar)[0].id;
-              if (
-                realm
-                  .objects('EventItem')
-                  .filtered('serverId = $0', serverId)[0] === undefined
+              for (
+                var p = 0;
+                p < content1.GetModifiedEventsByPeriodResult.length;
+                p++
               ) {
-                realm.write(() => {
-                  realm.create(
-                    'EventItem',
-                    {
-                      title: content1.GetModifiedEventsByPeriodResult[p].Title,
-                      date: dateFormatted,
-                      scene: refreshedScene,
-                      time: eventTime,
-                      alerted: alertedPersons,
-                      outer: outer,
-                      troups: troups,
-                      required: required,
-                      conductor: conductor,
-                      sceneId: sceneId,
-                      serverId: serverId,
-                      id: realm.objects('EventItem').length + 1,
-                    },
-                    'modified',
+                let beginTime = content1.GetModifiedEventsByPeriodResult[
+                  p
+                ].StartDateStr.substring(11);
+                let endingTime = content1.GetModifiedEventsByPeriodResult[
+                  p
+                ].EndDateStr.substring(11);
+                let eventTime = beginTime + ' - ' + endingTime;
+                let date = content1.GetModifiedEventsByPeriodResult[
+                  p
+                ].StartDateStr.substring(0, 10)
+                  .split('.')
+                  .join('-');
+                let dateFormatted =
+                  date.substring(6) +
+                  '-' +
+                  date.substring(3).substring(0, 2) +
+                  '-' +
+                  date.substring(0, 2);
+                let alertedPersons =
+                  content1.GetModifiedEventsByPeriodResult[p].AlertedPersons;
+                let troups = content1.GetModifiedEventsByPeriodResult[p].Troups;
+                let outer =
+                  content1.GetModifiedEventsByPeriodResult[p].OuterPersons;
+                let required =
+                  content1.GetModifiedEventsByPeriodResult[p].RequiredPersons;
+                let conductor =
+                  content1.GetModifiedEventsByPeriodResult[p].Conductor;
+                let sceneId =
+                  content1.GetModifiedEventsByPeriodResult[p].ResourceId;
+                let serverId = content1.GetModifiedEventsByPeriodResult[p].Id;
+                let findVar =
+                  sceneId.charAt(0).toUpperCase() + sceneId.slice(1);
+                if (
+                  realm.objects('Scene').filtered('resourceId = $0', findVar)[0]
+                    .id === undefined
+                ) {
+                  Alert.alert(
+                    'Внимание',
+                    'Добавлена новая сцена. Пожалуйста, обновите данные через настройки!',
+                    {cancelable: true},
                   );
-                  this.setState({realm});
-                });
-              } else {
-                let refreshed = realm
-                  .objects('EventItem')
-                  .filtered('serverId = $0', serverId)[0].id;
-                realm.write(() => {
-                  realm.create(
-                    'EventItem',
-                    {
-                      title: content1.GetModifiedEventsByPeriodResult[p].Title,
-                      date: dateFormatted,
-                      scene: refreshedScene,
-                      time: eventTime,
-                      alerted: alertedPersons,
-                      outer: outer,
-                      troups: troups,
-                      required: required,
-                      conductor: conductor,
-                      sceneId: sceneId,
-                      serverId: serverId,
-                      id: refreshed,
-                    },
-                    'modified',
-                  );
-                  this.setState({realm});
-                });
+                } else {
+                  var refreshedScene = realm
+                    .objects('Scene')
+                    .filtered('resourceId = $0', findVar)[0].id;
+                  if (
+                    realm
+                      .objects('EventItem')
+                      .filtered('serverId = $0', serverId)[0] === undefined
+                  ) {
+                    realm.write(() => {
+                      realm.create(
+                        'EventItem',
+                        {
+                          title:
+                            content1.GetModifiedEventsByPeriodResult[p].Title,
+                          date: dateFormatted,
+                          scene: refreshedScene,
+                          time: eventTime,
+                          alerted: alertedPersons,
+                          outer: outer,
+                          troups: troups,
+                          required: required,
+                          conductor: conductor,
+                          sceneId: sceneId,
+                          serverId: serverId,
+                          id: realm.objects('EventItem').length + 1,
+                        },
+                        'modified',
+                      );
+                      this.setState({realm});
+                    });
+                  } else {
+                    let refreshed = realm
+                      .objects('EventItem')
+                      .filtered('serverId = $0', serverId)[0].id;
+                    realm.write(() => {
+                      realm.create(
+                        'EventItem',
+                        {
+                          title:
+                            content1.GetModifiedEventsByPeriodResult[p].Title,
+                          date: dateFormatted,
+                          scene: refreshedScene,
+                          time: eventTime,
+                          alerted: alertedPersons,
+                          outer: outer,
+                          troups: troups,
+                          required: required,
+                          conductor: conductor,
+                          sceneId: sceneId,
+                          serverId: serverId,
+                          id: refreshed,
+                        },
+                        'modified',
+                      );
+                      this.setState({realm});
+                    });
+                  }
+                }
               }
             }
+          } else {
+            return Alert.alert(
+              'Ошибка',
+              'Произошла ошибка при подключении к серверу. Код ошибки:' + stat,
+              {cancelable: true},
+            );
           }
+        } else {
+          return Alert.alert(
+            'Ошибка',
+            'Произошла ошибка при подключении к серверу. Код ошибки:' + stat,
+            {cancelable: true},
+          );
         }
       }
     });
@@ -362,6 +384,7 @@ export default class Store extends React.Component {
   getDeletedEvents = async () => {
     var testBody = this.state.usertoken;
     const prodCheck = JSON.parse(await AsyncStorage.getItem('development'));
+    console.log(prodCheck);
     if (prodCheck) {
       var port = 'https://calendar.bolshoi.ru:8050';
     } else {
@@ -401,20 +424,35 @@ export default class Store extends React.Component {
       console.log(e);
       return null;
     });
-    const content1 = await rawResponse1.json();
-    if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
-    } else {
-      for (var p = 0; p < content1.GetDeletedEventsByPeriodResult.length; p++) {
-        let serverId = content1.GetDeletedEventsByPeriodResult[p].EventId;
-        let deleted = realm
-          .objects('EventItem')
-          .filtered('serverId = $0', serverId);
-        realm.write(() => {
-          realm.delete(deleted);
-        });
-        this.setState({realm});
+    const stat = rawResponse1.status;
+    console.log(stat);
+    if (stat === 200) {
+      const content1 = await rawResponse1.json();
+      if (_.isEmpty(content1.GetDeletedEventsByPeriodResult)) {
+      } else {
+        for (
+          var p = 0;
+          p < content1.GetDeletedEventsByPeriodResult.length;
+          p++
+        ) {
+          let serverId = content1.GetDeletedEventsByPeriodResult[p].EventId;
+          let deleted = realm
+            .objects('EventItem')
+            .filtered('serverId = $0', serverId);
+          realm.write(() => {
+            realm.delete(deleted);
+          });
+          this.setState({realm});
+        }
       }
+    } else {
+      return Alert.alert(
+        'Ошибка',
+        'Произошла ошибка при подключении к серверу. Код ошибки:' + stat,
+        {cancelable: true},
+      );
     }
+
     await AsyncStorage.removeItem('ModifiedRefresh');
     await AsyncStorage.setItem('ModifiedRefresh', JSON.stringify(refreshDate));
   };
