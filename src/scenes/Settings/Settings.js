@@ -268,7 +268,8 @@ export default class SettingsScreen extends React.Component {
   };
 
   fetchData = async testBody => {
-    if (this.state.prodCheck) {
+    const prodCheck = JSON.parse(await AsyncStorage.getItem('development'));
+    if (prodCheck) {
       var port = 'https://calendar.bolshoi.ru:8050';
     } else {
       port = 'https://calendartest.bolshoi.ru:8050';
@@ -543,7 +544,7 @@ export default class SettingsScreen extends React.Component {
           }}>
           <Text style={{alignSelf: 'center'}}>
             Подождите, идет обновление данных ({scenesCounter} из{' '}
-            {this.state.scenesCountMax} сцен.)
+            {this.state.scenesCountMax} сцен)
           </Text>
           <ActivityIndicator size="small" color="#0000ff" />
         </Overlay>

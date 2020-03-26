@@ -145,7 +145,6 @@ export default class Store extends React.Component {
       await this.firstOpenFormatData();
     }
     this.props.navigation.addListener('didFocus', async () => {
-      clearInterval(this.interval);
       this.interval = setInterval(
         () => this.refreshDataFromApi(),
         1000 * 60 * 5,
@@ -191,8 +190,9 @@ export default class Store extends React.Component {
   };
 
   getModifiedEvents = async () => {
+    const prodCheck = JSON.parse(await AsyncStorage.getItem('development'));
     var testBody = this.state.usertoken;
-    if (this.state.prodCheck) {
+    if (prodCheck) {
       var port = 'https://calendar.bolshoi.ru:8050';
     } else {
       port = 'https://calendartest.bolshoi.ru:8050';
@@ -234,6 +234,7 @@ export default class Store extends React.Component {
           moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
           '/' +
           moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
+        console.log(urlTest);
         let rawResponse1 = await fetch(urlTest, {
           method: 'POST',
           headers: {
@@ -360,7 +361,8 @@ export default class Store extends React.Component {
 
   getDeletedEvents = async () => {
     var testBody = this.state.usertoken;
-    if (this.state.prodCheck) {
+    const prodCheck = JSON.parse(await AsyncStorage.getItem('development'));
+    if (prodCheck) {
       var port = 'https://calendar.bolshoi.ru:8050';
     } else {
       port = 'https://calendartest.bolshoi.ru:8050';
@@ -387,6 +389,7 @@ export default class Store extends React.Component {
       moment(lastMomentTime).format('YYYY-MM-DDTHH:mm:ss') +
       '/' +
       moment(newMomentTime).format('YYYY-MM-DDTHH:mm:ss');
+    console.log(urlTest);
     let rawResponse1 = await fetch(urlTest, {
       method: 'POST',
       headers: {
@@ -624,65 +627,6 @@ export default class Store extends React.Component {
     this.formatData();
   };
 
-  closePicker = async (date, event) => {
-    let savedDate = await AsyncStorage.getItem('PickerDate');
-    if (Platform.OS === 'ios') {
-      var dateFormatted = new Date(event);
-      let testDate = dateFormatted;
-      if (event !== undefined) {
-        testDate = dateFormatted;
-        this.setState({
-          pickerDate: dateFormatted,
-        });
-      } else if (savedDate !== null && savedDate !== undefined) {
-        let formatter = savedDate.substring(0, savedDate.length - 6);
-        testDate = new Date(formatter.substring(1) + 'Z');
-        this.setState({
-          pickerDate: testDate,
-        });
-      } else {
-        testDate = null;
-        this.setState({
-          pickerDate: new Date(),
-        });
-      }
-      await AsyncStorage.removeItem('PickerDate');
-      await AsyncStorage.setItem(
-        'PickerDate',
-        testDate !== null ? JSON.stringify(testDate) : testDate,
-      );
-    } else {
-      dateFormatted = new Date(date.nativeEvent.timestamp);
-      let testDate = dateFormatted;
-      if (event !== undefined) {
-        testDate = dateFormatted;
-        this.setState({
-          showPicker: false,
-          pickerDate: dateFormatted,
-        });
-      } else if (savedDate !== null && savedDate !== undefined) {
-        let formatter = savedDate.substring(0, savedDate.length - 6);
-        testDate = new Date(formatter.substring(1) + 'Z');
-        this.setState({
-          showPicker: false,
-          pickerDate: testDate,
-        });
-      } else {
-        testDate = null;
-        this.setState({
-          showPicker: false,
-          pickerDate: new Date(),
-        });
-      }
-      await AsyncStorage.removeItem('PickerDate');
-      await AsyncStorage.setItem(
-        'PickerDate',
-        testDate !== null ? JSON.stringify(testDate) : testDate,
-      );
-      await this.formatData();
-    }
-  };
-
   onDateChange = async date => {
     this.setState({
       pickerDate: date,
@@ -780,73 +724,3 @@ export default class Store extends React.Component {
     );
   }
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-    paddingVertical: 50,
-    position: 'relative',
-  },
-  title: {
-    fontSize: 30,
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-  },
-  list: {
-    paddingVertical: 5,
-    margin: 3,
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    zIndex: -1,
-    height: 50,
-  },
-  lightText: {
-    color: '#000000',
-    width: '100%',
-    paddingLeft: 15,
-    fontSize: 20,
-  },
-  line: {
-    height: 0.5,
-    width: '100%',
-    backgroundColor: '#2196f3',
-  },
-  button: {
-    marginBottom: 30,
-    width: 160,
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginTop: 40,
-    borderRadius: 6,
-    backgroundColor: '#1976D2',
-  },
-  buttonTouch: {
-    textAlign: 'center',
-    padding: 20,
-    color: '#fff',
-    fontSize: 18,
-  },
-  numberBox: {
-    position: 'absolute',
-    bottom: 65,
-    width: 40,
-    height: 40,
-    borderRadius: 25,
-    left: 275,
-    zIndex: 3,
-    backgroundColor: '#e3e3e3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  number: {fontSize: 14, color: '#000'},
-  selected: {backgroundColor: '#9be7ff'},
-});
