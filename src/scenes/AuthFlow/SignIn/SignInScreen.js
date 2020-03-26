@@ -181,6 +181,8 @@ export default class SignInScreen extends React.Component {
     } else {
       port = 'https://calendartest.bolshoi.ru:8050';
     }
+    var testUURl = port + '/WCF/BTService.svc/GetScenes';
+    console.log(testBody, testUURl);
     await NetInfo.fetch().then(async state => {
       if (state.isConnected === true && this.state.usertoken !== null) {
         let rawResponseScenes = await fetch(
@@ -374,8 +376,6 @@ export default class SignInScreen extends React.Component {
     } else {
       port = 'https://calendartest.bolshoi.ru:8050';
     }
-    console.log(port, this.state.username, this.state.password);
-    console.log(_.isEmpty(realm.objects('EventItem')), 'asdasd');
     var mask = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (mask.test(this.state.email.toLowerCase()) === true) {
       var testBody = JSON.stringify({

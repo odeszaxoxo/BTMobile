@@ -52,6 +52,7 @@ export default class Store extends React.Component {
   static navigationOptions = ({navigation}) => {
     const reset = navigation.getParam('reset', () => {});
     const showPicker = navigation.getParam('showPicker', () => {});
+    const toSettings = navigation.getParam('toSettings', () => {});
     const firstIcon = (
       <AwesomeIcon name="calendar-day" size={22} color="#000" />
     );
@@ -90,7 +91,7 @@ export default class Store extends React.Component {
       headerLeft: () => (
         <View style={{flexDirection: 'row'}}>
           <Button
-            onPress={() => navigation.navigate('Settings')}
+            onPress={() => toSettings()}
             icon={{
               name: 'cog',
               type: 'font-awesome',
@@ -139,11 +140,16 @@ export default class Store extends React.Component {
   componentDidMount = async () => {
     this.props.navigation.setParams({reset: this.reset});
     this.props.navigation.setParams({showPicker: this.showPicker});
+    this.props.navigation.setParams({toSettings: this.toSettings});
     if (realm.objects('EventItem').length > 0) {
       await this.firstOpenFormatData();
     }
-    this.interval = setInterval(() => this.refreshDataFromApi(), 1000 * 60 * 5);
     this.props.navigation.addListener('didFocus', async () => {
+      clearInterval(this.interval);
+      this.interval = setInterval(
+        () => this.refreshDataFromApi(),
+        1000 * 60 * 5,
+      );
       await this.formatData();
     });
   };
@@ -163,6 +169,12 @@ export default class Store extends React.Component {
     await this.setNotifications();
     await this.formatter();
     this.setState({showModal: false});
+  };
+
+  toSettings = () => {
+    console.log('toset');
+    clearInterval(this.interval);
+    this.props.navigation.navigate('Settings');
   };
 
   showPicker = () => {
