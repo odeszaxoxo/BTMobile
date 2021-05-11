@@ -17,7 +17,7 @@
     "clone-deep": "^4.0.1",
     "immutability-helper": "^3.0.1",
     "jetifier": "^1.6.5",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.27",
     "native-base": "^2.13.8",
